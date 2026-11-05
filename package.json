@@ -1,0 +1,29 @@
+{
+  "name": "katalon-run-clock",
+  "version": "1.0.0",
+  "description": "Real elapsed time for Katalon Studio runs, and whether parallel execution actually helps each test suite.",
+  "keywords": [
+    "katalon",
+    "katalon-studio",
+    "parallel-execution",
+    "test-suite",
+    "performance"
+  ],
+  "license": "UNLICENSED",
+  "author": "Monty Bagati <bagati.monty@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/montbaga/katalon-run-clock.git"
+  },
+  "bin": {
+    "katalon-run-clock": "bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "payload",
+    "VERSION"
+  ],
+  "engines": {
+    "node": ">=14"
+  }
+}
