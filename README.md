@@ -1,5 +1,6 @@
 # Katalon Run Clock
 
+[![CI](https://github.com/montbaga/katalon-run-clock/actions/workflows/ci.yml/badge.svg)](https://github.com/montbaga/katalon-run-clock/actions/workflows/ci.yml)
 [![Tested on Katalon Studio 11.6](https://img.shields.io/badge/Katalon%20Studio-tested%20on%2011.6-2a2a2a)](https://katalon.com/katalon-studio)
 [![Installer: Node.js 14 or newer, tested on 24](https://img.shields.io/badge/installer-Node.js%2014%20or%20newer%2C%20tested%20on%2024-2a2a2a)](https://nodejs.org)
 [![Runs on Windows, macOS and Linux](https://img.shields.io/badge/runs%20on-Windows%20%7C%20macOS%20%7C%20Linux-2a2a2a)](#run-clock-in-ci)

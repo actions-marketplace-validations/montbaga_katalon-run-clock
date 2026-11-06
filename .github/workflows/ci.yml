@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  installer:
+    name: Installer, ${{ matrix.os }}, Node ${{ matrix.node }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node: [24]
+        include:
+          # the oldest Node.js the README promises
+          - os: ubuntu-latest
+            node: 14
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Install, upgrade and uninstall in a Katalon project
+        shell: bash
+        run: |
+          set -e
+          P="$RUNNER_TEMP/My Katalon Project"
+          mkdir -p "$P"
+          touch "$P/My Katalon Project.prj"
+          SETTINGS="$P/Include/config/runclock/runclock.properties"
+
+          node bin/cli.js install "$P"
+          for f in "Test Listeners/RunClockListener.groovy" Keywords/runclock/RunClockRecorder.groovy \
+                   Keywords/runclock/RunClockReport.groovy Keywords/runclock/RunClockSettings.groovy \
+                   Include/config/runclock/report.html Include/config/runclock/runclock.properties; do
+            test -f "$P/$f" || { echo "not installed: $f"; exit 1; }
+          done
+
+          echo "history=readonly" >> "$SETTINGS"
+          node bin/cli.js install "$P"
+          grep -q "history=readonly" "$SETTINGS" || { echo "upgrade replaced the settings"; exit 1; }
+
+          node bin/cli.js uninstall "$P"
+          test ! -e "$P/Keywords/runclock/RunClockReport.groovy" || { echo "uninstall left files"; exit 1; }
+          test -f "$SETTINGS" || { echo "uninstall removed the settings"; exit 1; }
+
+          mkdir -p "$RUNNER_TEMP/not-a-project"
+          if node bin/cli.js install "$RUNNER_TEMP/not-a-project"; then echo "installed into a folder with no .prj"; exit 1; fi
+          test "$(node bin/cli.js --version)" = "$(tr -d '\r\n' < VERSION)"
+
+  checks:
+    name: Report code and package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # Groovy 3.0.25 is what Katalon Studio 11 bundles. The recorder and listener need
+      # Katalon's own classes, so only the report and settings classes compile here.
+      - name: Compile the report and settings classes
+        run: |
+          set -e
+          V=3.0.25
+          curl -sSfLO "https://repo1.maven.org/maven2/org/codehaus/groovy/groovy/$V/groovy-$V.jar"
+          curl -sSfLO "https://repo1.maven.org/maven2/org/codehaus/groovy/groovy-json/$V/groovy-json-$V.jar"
+          mkdir -p "$RUNNER_TEMP/classes"
+          java -cp "groovy-$V.jar:groovy-json-$V.jar" org.codehaus.groovy.tools.FileSystemCompiler -d "$RUNNER_TEMP/classes" \
+            payload/Keywords/runclock/RunClockSettings.groovy payload/Keywords/runclock/RunClockReport.groovy
+
+      - name: Check the report page's script
+        run: |
+          node -e "const h = require('fs').readFileSync('payload/Include/config/runclock/report.html', 'utf8');
+            require('fs').writeFileSync(process.env.RUNNER_TEMP + '/page.js', [...h.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).join('\n'));"
+          node --check "$RUNNER_TEMP/page.js"
+
+      - name: Check the versions agree
+        run: test "$(node -p "require('./package.json').version")" = "$(tr -d '\r\n' < VERSION)"
+
+      - name: Check what npm would publish
+        run: npm pack --dry-run
