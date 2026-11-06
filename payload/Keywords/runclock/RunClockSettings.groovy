@@ -8,6 +8,8 @@ import java.nio.file.Paths
 // Include/config/runclock/runclock.properties, each value overridable by an environment variable for CI
 class RunClockSettings {
 
+    static final List<String> CI_VARS = ['CI', 'JENKINS_URL', 'TF_BUILD', 'GITLAB_CI', 'GITHUB_ACTIONS', 'TEAMCITY_VERSION', 'BITBUCKET_BUILD_NUMBER']
+
     String openReport = 'studio'
     String history = 'on'
     Path historyDir
@@ -50,6 +52,10 @@ class RunClockSettings {
         List<String> urls = values(props, s.env, 'webhookUrl', 'RUN_CLOCK_WEBHOOK')
         s.webhookUrl = urls ? urls[0] : ''
         return s
+    }
+
+    boolean onCi() {
+        return CI_VARS.any { String name -> env.get(name) != null }
     }
 
     // the environment variable first, then the file; a value that is not valid is skipped

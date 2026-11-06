@@ -319,6 +319,10 @@ class RunClockReport {
         boolean writing = settings.history == 'on'
         Map<String, Object> entry = runEntry(model)
         entry.dir = sessionDir.toAbsolutePath().normalize().toString()
+        // a CI agent never has earlier builds' folders, so its runs stay listed without them
+        if (settings.onCi()) {
+            entry.ci = true
+        }
         Path home = historyDir.resolve('index.html')
         Closure body = {
             List<Map> runs = writing ? updateRuns(entry) : readRuns(entry)
@@ -329,15 +333,15 @@ class RunClockReport {
             }
             if (previous != null) {
                 model.previous = [session: previous.session, setting: previous.setting, elapsed: previous.elapsed,
-                                  at     : previous.at, href: link(dir, sessionPage(previous))]
+                                  at     : previous.at, href: pageHref(dir, previous, entry)]
             }
             List<Map> mine = runs.findAll { Map r -> r.entity == entry.entity }
             model.trend = (mine.size() > TREND ? mine.subList(mine.size() - TREND, mine.size()) : mine).collect { Map r ->
                 [session: r.session, at: r.at, setting: r.setting, elapsed: r.elapsed, runs: r.runs, failed: r.failed,
-                 current: r.session == entry.session, href: link(dir, sessionPage(r))]
+                 current: r.session == entry.session, href: pageHref(dir, r, entry)]
             }
             if (writing) {
-                List<Map> newest = runs.reverse().collect { Map r -> (r.findAll { k, v -> k != 'dir' } as Map) + [href: link(historyDir, sessionPage(r))] }
+                List<Map> newest = runs.reverse().collect { Map r -> (r.findAll { k, v -> k != 'dir' } as Map) + [href: pageHref(historyDir, r, entry)] }
                 writeAtomic(home, html([page: 'home', version: VERSION, generated: System.currentTimeMillis(),
                                         project: projectDir.fileName.toString(), history: settings.history, runs: newest] as Map<String, Object>))
             }
@@ -385,6 +389,12 @@ class RunClockReport {
             folder = projectDir.resolve('Reports').resolve((String) r.session)
         }
         return folder.resolve('run-clock').resolve('summary.html')
+    }
+
+    // null when a run's report is not on this machine, such as one from an earlier CI build
+    private String pageHref(Path fromDir, Map r, Map entry) {
+        Path page = sessionPage(r)
+        return r.session == entry.session || Files.exists(page) ? link(fromDir, page) : null
     }
 
     // a relative link that still works when the project folder moves; an absolute file link across drives
@@ -1051,7 +1061,7 @@ class RunClockReport {
             for (String line : Files.readAllLines(runsFile, StandardCharsets.UTF_8)) {
                 try {
                     Map run = (Map) json.parseText(line)
-                    if (run.session != entry.session && Files.isDirectory(sessionPage(run).parent.parent)) {
+                    if (run.session != entry.session && (run.ci || Files.isDirectory(sessionPage(run).parent.parent))) {
                         runs << run
                     }
                 } catch (Exception ignored) {

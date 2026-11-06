@@ -182,7 +182,7 @@ Katalon's own folder for that run. Every run is also listed in
 `Reports/run-clock/index.html`, newest first. From there you can open any
 run's report, pick a suite to see its real time across runs, or tick two
 runs to compare them. Runs disappear from the list when you delete their
-folder under `Reports`.
+folder under `Reports`, except runs from CI builds.
 
 To compare settings for a suite, run it once with each setting you want
 measured. The setting is under Test Suite > Execution Information >
@@ -288,7 +288,7 @@ The history folder (`historyDir`) holds:
 |---|---|
 | `history.jsonl`: one line per run, used for medians and estimates | The newest `historyLimit` runs of each suite, 5000 in all |
 | `tests/`: each test's time per run, one file per suite | The newest 20 runs of each suite |
-| `runs.jsonl`: the list behind the All runs page | Runs whose report folder still exists, newest 1000 |
+| `runs.jsonl`: the list behind the All runs page | Runs whose report folder still exists, and every run from a CI build; newest 1000 |
 | `index.html`: the All runs page | Rewritten after every run |
 | `ci-summary.md`: the latest run's summary | Rewritten after every run |
 
@@ -305,7 +305,7 @@ records its own times. On a CI agent it never opens a browser.
 
 | Where | What you get |
 |---|---|
-| The build's summary page | Real time, setting, start-up per process and test time |
+| The build's page | Real time, setting, start-up per process and test time. On Azure Pipelines it is on the Extensions tab |
 | The build's artifacts | Each run's full report, `Reports/<run>/run-clock/summary.html`: one file that opens offline |
 | The Katalon log | The same summary as in the Log Viewer |
 
@@ -339,9 +339,13 @@ show as estimates. Two things fix that:
    and `readonly` for every other branch. A pull request is then compared
    with main's runs without changing them.
 
-Azure saves a cache only when the job succeeds, so the example marks the
-Katalon step `continueOnError: true`: a build whose tests fail still keeps
-its run, and shows as partially succeeded.
+Azure saves a cache only when its job succeeds, so the example saves the
+history in a second small job that always runs. A build whose tests fail
+stays red and still keeps its run.
+
+Runs recorded on a CI agent stay on the All runs page and in every
+comparison, even though the next build does not have their report folders.
+They are listed without a link to their report.
 
 On a self-hosted agent, you can skip the cache: set
 `RUN_CLOCK_HISTORY_DIR` to a folder the agent keeps between builds.

@@ -357,7 +357,8 @@ details.plan > summary { padding: 6px 0; font-size: 16px; cursor: pointer; }
     Object.entries(attrs || {}).forEach(([k, v]) => n.setAttribute(k, v));
     return n;
   };
-  const link = (cls, text, href) => { const a = el('a', cls, text); a.href = safeHref(href); return a; };
+  // no href: the report is not on this machine, so the same element without a link
+  const link = (cls, text, href) => { if (!href) return el('span', cls, text); const a = el('a', cls, text); a.href = safeHref(href); return a; };
 
   const fmt = ms => {
     if (ms === null || ms === undefined || isNaN(ms)) return '-';
@@ -1270,7 +1271,7 @@ details.plan > summary { padding: 6px 0; font-size: 16px; cursor: pointer; }
     closeSection(
       ['Written ' + when(D.generated) + '.', 'Real time runs from the start of the run to the exit of the last process. Time Katalon spends on its own reports after that is not included.'].concat(S.own > 0 ? ['Run Clock wrote this report in ' + fmt(S.own) + ' after the tests. That time is left out of the real time and of every comparison.'] : [])
         .concat(D.history === 'off' ? ['History is off for this project, so this report stands alone.'] : (D.history === 'readonly' ? ['This run was compared with earlier runs but not added to them: history is read only.'] : [])),
-      [D.home ? ['All runs', D.home] : null, D.previous ? ['Previous run', D.previous.href] : null]);
+      [D.home ? ['All runs', D.home] : null, D.previous && D.previous.href ? ['Previous run', D.previous.href] : null]);
   };
 
   // home: every run in the project
@@ -1331,7 +1332,8 @@ details.plan > summary { padding: 6px 0; font-size: 16px; cursor: pointer; }
     shown.forEach((r, i) => {
       const rad = 252 - pitch * i - pitch / 2;
       dial.lanes.appendChild(svg('circle', { cx: 300, cy: 300, r: rad, class: 'lane-track', 'stroke-width': th }));
-      const a = svg('a', { href: safeHref(r.href), 'aria-label': r.title + ', ' + when(r.at) + ', ' + r.setting + ': ' + fmt(r.elapsed) });
+      const label = r.title + ', ' + when(r.at) + ', ' + r.setting + ': ' + fmt(r.elapsed);
+      const a = r.href ? svg('a', { href: safeHref(r.href), 'aria-label': label }) : svg('g', { 'aria-label': label });
       const p = svg('path', { d: dial.arc(rad, dial.ang(0), dial.ang(r.elapsed / top)), class: 'ring' + (i === 0 ? '' : (i === 1 ? '' : ' other')), stroke: i === 0 ? '#ff5b1f' : 'var(--ivory)', 'stroke-width': th });
       a.appendChild(p);
       const show = (x, y) => showTip(x, y, fmt(r.elapsed), [[r.setting], [when(r.at)], [plural(r.runs, 'test run', 'test runs') + ', ' + r.failed + ' failed'], ['Click to open this run']]);
@@ -1408,7 +1410,7 @@ details.plan > summary { padding: 6px 0; font-size: 16px; cursor: pointer; }
         ? b.title + ' with ' + b.setting + ' at ' + whenShort(b.at) + ', against ' + (a.entity !== b.entity ? a.title + ' with ' : '') + a.setting + ' at ' + whenShort(a.at) + '.'
         : 'There is no earlier run of ' + b.title + ' yet. Run it again to compare.');
       const acts = el('div', 'actions');
-      add(acts, link('btn quiet', 'Open newer report', b.href), a ? link('textlink', 'Open older report', a.href) : null);
+      add(acts, b.href ? link('btn quiet', 'Open newer report', b.href) : null, a && a.href ? link('textlink', 'Open older report', a.href) : null);
       if (custom) {
         const back = el('button', 'textlink', 'Back to latest against the run before');
         back.type = 'button';
@@ -1521,7 +1523,7 @@ details.plan > summary { padding: 6px 0; font-size: 16px; cursor: pointer; }
         const tests = el('td', 'n');
         tests.appendChild(r.failed ? el('span', 'bad', r.failed + ' failed') : el('span', 'dim', r.passed === r.runs ? 'all ' + r.runs + ' passed' : r.passed + ' passed'));
         add(tr, add(el('td'), box2), whenCell, oneSuite ? null : el('td', null, r.title), el('td', null, r.setting), el('td', 'n', fmt(r.elapsed)), vs,
-          el('td', 'n', fmt(r.startup)), tests, el('td', 'n', String(r.processes)), add(el('td', 'n'), link('open', 'Open report', r.href)));
+          el('td', 'n', fmt(r.startup)), tests, el('td', 'n', String(r.processes)), add(el('td', 'n'), r.href ? link('open', 'Open report', r.href) : el('span', 'dim', 'Not on this machine')));
         return tr;
       };
       const shown = list.filter((r, i) => i < 50 || ticks.includes(r.session));
@@ -1540,7 +1542,7 @@ details.plan > summary { padding: 6px 0; font-size: 16px; cursor: pointer; }
     select.addEventListener('change', () => { filter = select.value; ticks = []; refresh(); });
     refresh();
 
-    closeSection(['Updated ' + when(D.generated) + '.', 'A run stays on this list while its folder exists under Reports.'], [['Open the latest report', latest.href]]);
+    closeSection(['Updated ' + when(D.generated) + '.', 'A run stays on this list while its folder exists under Reports. Runs from CI builds always stay, and open only where their report is.'], [['Open the latest report', latest.href]]);
   };
 
   if (D.page === 'home') homePage(); else runPage();

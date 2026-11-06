@@ -241,8 +241,7 @@ class RunClockRecorder {
     }
 
     private static boolean onCi() {
-        return ['CI', 'JENKINS_URL', 'TF_BUILD', 'GITLAB_CI', 'GITHUB_ACTIONS', 'TEAMCITY_VERSION', 'BITBUCKET_BUILD_NUMBER']
-                .any { String name -> System.getenv(name) != null }
+        return RunClockSettings.CI_VARS.any { String name -> System.getenv(name) != null }
     }
 
     private static String parentCommand() {
