@@ -9,7 +9,7 @@
     "test-suite",
     "performance"
   ],
-  "license": "SEE LICENSE IN LICENSE.md",
+  "license": "Apache-2.0",
   "author": "Monty Bagati <bagati.monty@gmail.com>",
   "repository": {
     "type": "git",
