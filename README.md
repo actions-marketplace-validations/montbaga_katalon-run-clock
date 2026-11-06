@@ -1,43 +1,49 @@
 # Katalon Run Clock
 
-Shows how long a Katalon Studio run really took, where the time went, and whether parallel execution makes each test suite faster or slower.
+[![Tested on Katalon Studio 11.6](https://img.shields.io/badge/Katalon%20Studio-tested%20on%2011.6-2a2a2a)](https://katalon.com/katalon-studio)
+[![Node.js 14+ for the installer](https://img.shields.io/badge/installer-Node.js%2014%2B-2a2a2a)](https://nodejs.org)
+[![License: free to use, no redistribution](https://img.shields.io/badge/license-free%20to%20use%2C%20no%20redistribution-ff5b1f)](LICENSE.md)
+
+Shows how long a Katalon Studio run really took, where the time went, and
+whether parallel execution makes each test suite and Test Suite Collection
+faster or slower. A drop-in Test Listener: no plugin, no changes to your
+Test Cases or Test Suites.
+
+See [`ARCHITECTURE.md`](ARCHITECTURE.md) for how it is built.
 
 ![A Run Clock report for a suite of four API tests: 27.2 s of real time with Parallel, max 4, against 6.6 s with parallel execution off](docs/images/report-hero.jpg)
 
-Katalon 11.4+ can run the test cases of a suite in parallel, but each test case gets its own process. For short tests, starting those processes can take longer than the tests themselves, and the run gets slower instead of faster. Test Suite Collection totals in Katalon can also be lower than the time the run actually took. Run Clock measures every process and gives you the real numbers.
+## See It in Action
 
-## What you get
+**1. Install with one command**
 
-After every test suite or collection run:
+```
+npx katalon-run-clock install "C:\path\to\your\katalon-project"
+```
 
-- **Real elapsed time**, from the start of the run to the exit of the last process.
-- **Where the time went**: preparing the run, process start-up, the tests themselves, and shutdown.
-- **For a single suite**, the measured or estimated time for each setting (parallel off, max 2, 4, 8), and which one is fastest. Each run you make with a different setting replaces an estimate with a measurement.
-- **For a Test Suite Collection**, the real start, end and elapsed time of each suite, and whether running its suites one after another or several at once would finish sooner.
-- **The tests**: the slowest tests, the tests that took longer than usual, and for a long suite, how to split it evenly across machines.
-- **A warning when a run is slower than usual** for its setting, in the report and in the Log Viewer.
-- **For CI**: a Markdown summary for the pipeline page, the GitHub Actions job summary, and a one-line message to Slack or another chat tool.
-- **An HTML report** (`summary.html`): the run drawn as a chronograph you can replay and scrub through, every setting raced against the others, the suite's recent runs, where the process time went, a timeline of every process with a "processes running" strip, every number as a table, and a copy-summary button. It is a single file with no external resources, so it opens offline and can be attached anywhere.
+**2. Run a test suite or collection as you always do**
 
-The summary also appears in the Katalon Log Viewer at the end of each run; for a collection, under its last suite.
+When the run finishes, its report opens in your browser.
 
-## The report
+**3. See which setting is fastest**
 
-### Which setting is fastest
-
-Every parallel setting of the suite, raced on one clock. For these four short API tests, running them one after another wins: 6.6 s, against 17.3 s at best with parallel execution on.
+Every parallel setting of the suite, raced on one clock. For these four
+short API tests, running them one after another wins: 6.6 s, against
+17.3 s at best with parallel execution on.
 
 ![Every parallel setting of a suite raced against the others. Parallel off finishes first in 6.6 s](docs/images/report-settings.jpg)
 
-### Where the time went
+**4. See where the time went**
 
-In a parallel run, most of the process time can be Java start-up rather than testing. In this run, 84% of it was.
+In a parallel run, most of the process time can be Java start-up rather
+than testing. In this run, 84% of it was.
 
 ![Where the process time went: 84% start-up, 14% running tests](docs/images/report-time.jpg)
 
-### Collections
+**5. For a Test Suite Collection, compare its own Execution mode**
 
-The collection's own Execution mode, compared across every way you have run it. All five suites at once took 91.1 s, against 3 min 10 s one after another.
+Every way you have run the collection, side by side. All five suites at
+once took 91.1 s, against 3 min 10 s one after another.
 
 ![A collection of five suites run one after another, two, four and all five at once. All five at once finishes first](docs/images/report-collection.jpg)
 
@@ -45,34 +51,131 @@ Every Java process of the run, second by second, grouped by suite:
 
 ![The timeline of a five-suite collection, one row per process, grouped by suite, with a processes running strip](docs/images/report-timeline.jpg)
 
-### When a run is slow
+**6. Get told when a run is slower than usual**
 
-When a run takes longer than usual for its setting, the report, the Log Viewer and the chat message say so.
+The report, the Log Viewer and the chat message all say so.
 
 ![A report warning that the run was 137% slower than usual for Parallel, max 4](docs/images/report-slower.jpg)
 
-### Every run in one place
+**7. Find every run in one place**
 
-`Reports/run-clock/index.html` lists every run in the project. Pick a suite to see its real time run by run, or tick two runs to compare them.
+`Reports/run-clock/index.html` lists every run in the project. Pick a suite
+to see its real time run by run, or tick two runs to compare them.
 
 ![Real time of each run of a suite, oldest on the left](docs/images/all-runs-history.jpg)
 
 ![Two runs of a collection side by side: 3 min 10 s one after another, 91.1 s all at once](docs/images/all-runs-compare.jpg)
 
-### On a phone
+**On a phone**
 
 <table>
-  <tr>
-    <td><img src="docs/images/phone-report.jpg" width="320" alt="A run report on a phone"></td>
-    <td><img src="docs/images/phone-all-runs.jpg" width="320" alt="The All runs page on a phone"></td>
-  </tr>
+<tr><th>A run's report</th><th>All runs</th></tr>
+<tr>
+<td><img src="docs/images/phone-report.jpg" width="320" alt="A run report on a phone"></td>
+<td><img src="docs/images/phone-all-runs.jpg" width="320" alt="The All runs page on a phone"></td>
+</tr>
 </table>
 
-Every image here is from a real run in Katalon Studio 11.6 on Windows 11. More, from 21 runs of suites, collections, settings and a command-line run: [docs/screenshots](docs/screenshots/README.md).
+## Verified on real runs
 
-## In the Log Viewer
+Every image above is from a real run in Katalon Studio 11.6 Enterprise on
+Windows 11. The full set, with each run's setting and real time, is in
+[`docs/screenshots`](docs/screenshots/README.md):
 
-Real Log Viewer output for a suite of 4 short API tests, after running each setting at least once (Katalon Studio 11.6, Windows 11):
+| Part | What was run | Runs |
+|---|---|---|
+| 1 | Two test suites, with parallel off and with max 1, 2, 3, 4 and 8 | 10 |
+| 2 | Two Test Suite Collections, Sequential and Parallel with max 2, 4 and 8 | 7 |
+| 3 | The `history` setting set to `readonly`, then `off` | 2 |
+| 4 | A chat webhook, and a command-line run with `katalonc` | 2 |
+
+## Why this exists
+
+Katalon 11.4+ can run the test cases of a suite in parallel, but each test
+case gets its own Java process. For short tests, starting those processes
+can take longer than the tests themselves, and the run gets slower instead
+of faster.
+
+| Problem | How Run Clock solves it |
+|---|---|
+| The time spent starting a process for every test case is hard to see | Records the start and exit of every Java process and reports the real time, from Katalon preparing the run to the last process exiting |
+| No way to tell whether parallel execution helps a suite | Races every setting you have run (median of the last 5 runs each) and estimates the ones you have not |
+| Test Suite Collection totals can be lower than the time the run took | Measures each suite on the collection's own clock, and compares Sequential with Parallel for the collection itself |
+| One slow run can mislead | Compares medians, and flags a run that is slower than usual for its setting |
+| A timing tool must not slow the run down | Writes its report once per run, after the tests, and leaves that time out of every figure |
+| A reporting bug must not fail a test | Every entry point catches its own errors; recording stops and the test carries on |
+
+## Requirements
+
+- Katalon Studio 11. Tested on 11.6.
+- Parallel execution within a suite needs Katalon Studio 11.4+ and an
+  Enterprise licence. Run Clock also measures runs without it.
+- Node.js 14+, for the installer only.
+
+## Install / Uninstall
+
+**With npx:**
+
+```
+npx katalon-run-clock install "C:\path\to\your\katalon-project"
+npx katalon-run-clock uninstall "C:\path\to\your\katalon-project"
+```
+
+**From a copy of this repository:**
+
+```
+node bin/cli.js install "C:\path\to\your\katalon-project"
+node bin/cli.js uninstall "C:\path\to\your\katalon-project"
+```
+
+Then in Katalon Studio's Tests Explorer, right-click **Keywords** and
+choose **Refresh**, then do the same for **Test Listeners** and
+**Include**. Studio does not notice files added from outside until you do.
+Do the same after an upgrade.
+
+## What the installer actually does
+
+1. Checks that the folder is a Katalon project (it has a `*.prj` file)
+   before writing anything, and stops otherwise.
+2. Copies the six files below into the project.
+3. Keeps an existing `runclock.properties`, so your settings survive an
+   upgrade.
+4. Running it again upgrades the project in place.
+
+Uninstalling removes the same files and keeps your `runclock.properties`
+and every recorded run under `Reports/`.
+
+## What gets installed
+
+```
+Test Listeners/RunClockListener.groovy        auto-discovered by Katalon; four one-line hooks
+Keywords/runclock/RunClockRecorder.groovy     records the events of each Java process
+Keywords/runclock/RunClockReport.groovy       works out the times, advice and history; writes the reports
+Keywords/runclock/RunClockSettings.groovy     reads runclock.properties and RUN_CLOCK_* environment variables
+Include/config/runclock/report.html           the report page template
+Include/config/runclock/runclock.properties   your settings, each one described in the file
+```
+
+## Using it
+
+Run any test suite or collection as usual. When a run started from Katalon
+Studio finishes, its report opens in your browser. Runs from Katalon
+Runtime Engine and CI servers never open a browser.
+
+Each run's report is `Reports/<run>/run-clock/summary.html`, inside
+Katalon's own folder for that run. Every run is also listed in
+`Reports/run-clock/index.html`, newest first. From there you can open any
+run's report, pick a suite to see its real time across runs, or tick two
+runs to compare them. Runs disappear from the list when you delete their
+folder under `Reports`.
+
+To compare settings for a suite, run it once with each setting you want
+measured. The setting is under Test Suite > Execution Information >
+Enable Parallel Execution / Max Concurrent Instances.
+
+**In the Log Viewer.** The same summary appears at the end of each run; for
+a collection, under its last suite. Real output for a suite of four short
+API tests, after running each setting at least once:
 
 ```
 Run Clock | Run Clock API | 20261105_151304
@@ -97,86 +200,72 @@ Parallel, max 8          17.3 s   measured once
 Fastest: Parallel off (Enable Parallel Execution unticked).
 ```
 
-## Requirements
+**How settings are compared.** The same suite with the same setting can
+take very different times from one run to the next, mostly because process
+start-up varies. So a setting you have run is shown as the median of its
+last 5 runs, and the fastest setting is chosen from those medians. Run a
+setting two or three times before acting on a close result. A setting you
+have not run yet is estimated from the start-up time measured at the
+nearest setting you have run, plus your test durations spread across the
+parallel slots. Running a setting once replaces its estimate.
 
-- Katalon Studio 11. Tested with 11.6.
-- Parallel execution within a suite needs Katalon Studio 11.4+ and an Enterprise licence. Run Clock also measures runs without it.
-- Node.js 14+ for the installer only.
+**Test Suite Collections.** A collection run gives one report: when each
+suite started and finished on the collection's clock, a timeline of every
+process grouped by suite, and the slowest tests across all its suites. The
+report also compares the collection's own Execution mode. After a
+Sequential run it estimates 2, 3 or 4 suites at once; after a Parallel run
+it estimates one suite after another. A way you have already run shows the
+median of its last 5 runs instead. When another way is at least 15% faster,
+it says which setting to change. Suites on one machine slow each other
+down, so run a suggested setting once to measure it before you keep it.
 
-## Install
+**The tests.** Every report lists the slowest tests. Once a suite has run
+three times with history on, tests that took `slowerBy` percent longer than
+their usual time (and at least a second longer) are listed. For a suite
+with at least six tests and a minute of test time, the report also shows
+how to split it evenly over 2, 3 or 4 machines.
 
-```
-npx katalon-run-clock install "C:\path\to\your\katalon-project"
-```
+**Slower than usual.** When a run's real time is `slowerBy` percent above
+the median of its last five runs with the same setting, and at least two
+seconds above it, the report, the Log Viewer and the chat message say so.
+It needs three earlier runs with that setting.
 
-Then in Katalon Studio's Tests Explorer, right-click **Keywords** and choose **Refresh**, then do the same for **Test Listeners** and **Include**. Studio does not notice files added from outside until you do. Do the same after an upgrade. No changes to your test cases or suites are needed.
+**Large suites.** Katalon starts one process per test case in a parallel
+suite, so 300 tests are 300 processes. Above 40 processes the dial shows
+how many were starting up, running tests and alive at each moment, the
+timeline uses one thin row per process, and the tables show their first 20
+rows with a button for the rest.
 
-It adds six files:
+## Configuration
 
-```
-Test Listeners/RunClockListener.groovy
-Keywords/runclock/RunClockRecorder.groovy
-Keywords/runclock/RunClockReport.groovy
-Keywords/runclock/RunClockSettings.groovy
-Include/config/runclock/report.html
-Include/config/runclock/runclock.properties
-```
+Edit `Include/config/runclock/runclock.properties` in Katalon Studio
+(Tests Explorer > Include > config > runclock). Each setting can also be
+set by an environment variable, which wins over the file. That is how a CI
+pipeline changes a setting without touching the project. A value that is
+not valid is skipped, and the next one in line is used: the environment
+variable, then the file, then the default.
 
-`runclock.properties` holds your settings. Upgrading keeps your copy; uninstalling leaves it in place.
-
-## Settings
-
-Edit `Include/config/runclock/runclock.properties` in Katalon Studio (Tests Explorer > Include > config > runclock). Each setting can also be set by an environment variable, which wins over the file. That is how a CI pipeline changes a setting without touching the project.
-
-| Setting | Environment variable | Values | Default |
+| Key | Environment variable | Default | Meaning |
 |---|---|---|---|
-| `openReport` | `RUN_CLOCK_OPEN` | `studio`, `always`, `never` | `studio` |
-| `history` | `RUN_CLOCK_HISTORY` | `on`, `readonly`, `off` | `on` |
-| `historyDir` | `RUN_CLOCK_HISTORY_DIR` | a folder, relative to the project or absolute | `Reports/run-clock` |
-| `historyLimit` | `RUN_CLOCK_HISTORY_LIMIT` | runs of each suite to remember, 5 to 1000 | `50` |
-| `slowerBy` | `RUN_CLOCK_SLOWER_BY` | percent longer than usual that counts as slower | `25` |
-| `webhookUrl` | `RUN_CLOCK_WEBHOOK` | a Slack-compatible incoming webhook | empty |
-| `ciSummary` | `RUN_CLOCK_CI_SUMMARY` | `on`, `off` | `on` |
+| `openReport` | `RUN_CLOCK_OPEN` | `studio` | `studio`: open the report after runs started from Katalon Studio. `always`: also Katalon Runtime Engine runs on a desktop. `never`: do not open it |
+| `history` | `RUN_CLOCK_HISTORY` | `on` | `on`, `readonly` or `off`, see Keeping runs below |
+| `historyDir` | `RUN_CLOCK_HISTORY_DIR` | `Reports/run-clock` | Where the history is kept, relative to the project or absolute |
+| `historyLimit` | `RUN_CLOCK_HISTORY_LIMIT` | `50` | Runs of each suite to remember, 5 to 1000 |
+| `slowerBy` | `RUN_CLOCK_SLOWER_BY` | `25` | Percent longer than usual that counts as slower |
+| `webhookUrl` | `RUN_CLOCK_WEBHOOK` | *(empty)* | A Slack-compatible incoming webhook for a one-line message per run. Keep it out of source control; set it in your CI instead |
+| `ciSummary` | `RUN_CLOCK_CI_SUMMARY` | `on` | Write `summary.md` for CI pages and the GitHub Actions job summary |
 
-A value that is not valid is skipped, and the next one in line is used: the environment variable, then the file, then the default.
+### Keeping runs
 
-## Use
-
-Run any test suite or collection as usual. When a run started from Katalon Studio finishes, its report opens in your browser. Runs from Katalon Runtime Engine and CI servers never open a browser. To change this, set `openReport` in `Include/config/runclock/runclock.properties` to `studio` (default), `always` or `never`, or set the `RUN_CLOCK_OPEN` environment variable.
-
-Every run is also listed in one file:
-
-```
-Reports/run-clock/index.html
-```
-
-It lists every run in the project, newest first, with the latest run at the top. From there you can:
-
-- open any run's full report,
-- filter by suite and see its real time across runs,
-- tick two runs and compare them side by side.
-
-Each run's report links back to this page and to the previous run of the same suite. Runs disappear from the list when you delete their folder under `Reports`.
-
-To compare settings for a suite, run it once with each setting you want measured. The setting is under Test Suite > Execution Information > Enable Parallel Execution / Max Concurrent Instances.
-
-## How settings are compared
-
-The same suite with the same setting can take very different times from one run to the next, mostly because process start-up varies. So a setting you have run is shown as the median of its last 5 runs, and the fastest setting is chosen from those medians. One unusually slow or fast run does not change the advice. Run a setting two or three times before acting on a close result.
-
-A setting you have not run yet is estimated: the start-up time measured at the nearest concurrency you have run, plus your test durations spread across the parallel slots. Start-up slows down when many processes start at once, so an estimate for higher concurrency based on a lower one is optimistic. Running a setting once replaces its estimate.
-
-## Keeping runs
-
-Each run's report is the archive. It lives in Katalon's own folder for that run, so it is kept as long as Katalon's report is, and deleting the folder removes the run.
-
-The history is what Run Clock learns from. It is small, and you choose what happens to it with `history`:
+Each run's report is the archive. It lives in Katalon's own folder for that
+run, so it is kept as long as Katalon's report is. The history is what Run
+Clock learns from, and you choose what happens to it with `history`:
 
 | `history` | What happens | Use it for |
 |---|---|---|
-| `on` (default) | Every run is compared with earlier runs and then added to the history and the All runs page. | Your own machine, and the CI builds of your main branch. |
-| `readonly` | Every run is compared with earlier runs, but nothing is written: the history, the run list and the All runs page stay as they were. | Pull-request and feature-branch builds, so they are measured against the main branch without changing it. |
-| `off` | No history is read or written. Each report stands alone, with no medians, usual times or links to other runs. | Teams that do not want earlier runs kept. |
+| `on` | Every run is compared with earlier runs, then added to the history and the All runs page | Your own machine, and the CI builds of your main branch |
+| `readonly` | Every run is compared with earlier runs, but nothing is written | Pull-request and feature-branch builds, so they are measured against the main branch without changing it |
+| `off` | No history is read or written. Each report stands alone | Teams that do not want earlier runs kept |
 
 The history folder (`historyDir`) holds:
 
@@ -188,15 +277,20 @@ The history folder (`historyDir`) holds:
 | `index.html`: the All runs page | Rewritten after every run |
 | `ci-summary.md`: the latest run's summary | Rewritten after every run |
 
-Each run's report also carries the recent runs of its suite, so a report saved on its own, such as a CI artifact, still shows the trend.
+Writes to the history are locked, so suites finishing at the same moment
+cannot overwrite each other. If the lock cannot be taken within 10
+seconds, the run's own report is still written and only the history is
+skipped.
 
-Writes to the history are locked, so suites finishing at the same moment cannot overwrite each other. If the lock cannot be taken within 10 seconds, the run's own report is still written and only the history is skipped; Run Clock never holds up Katalon.
+## CI setup
 
-## In a CI pipeline
+A CI agent that starts from a clean checkout has no history, so every build
+looks like the first. Keep the history folder between builds, and use
+`readonly` for builds that should not change it. The run's summary is
+written to `Reports/run-clock/ci-summary.md`, and on GitHub Actions it is
+added to the job summary page automatically.
 
-A CI agent that starts from a clean checkout has no history, so every build looks like the first. Keep the history folder between builds, and use `readonly` for builds that should not change it.
-
-GitHub Actions:
+### GitHub Actions
 
 ```yaml
 - uses: actions/cache@v4
@@ -211,9 +305,7 @@ GitHub Actions:
     RUN_CLOCK_HISTORY: ${{ github.ref_name == 'main' && 'on' || 'readonly' }}
 ```
 
-The run's summary is added to the job summary page automatically.
-
-Azure DevOps:
+### Azure Pipelines
 
 ```yaml
 variables:
@@ -235,51 +327,65 @@ steps:
   condition: always()
 ```
 
-Pipeline variables reach Katalon as environment variables, so `RUN_CLOCK_HISTORY` needs no `env:` block. To post to Slack, add your webhook address as a secret pipeline variable named `RUN_CLOCK_WEBHOOK` and map it in the Katalon step with `env: RUN_CLOCK_WEBHOOK: $(RUN_CLOCK_WEBHOOK)`, because Azure does not pass secrets to scripts on its own.
+Pipeline variables reach Katalon as environment variables, so
+`RUN_CLOCK_HISTORY` needs no `env:` block. To post to Slack, add your
+webhook address as a secret pipeline variable named `RUN_CLOCK_WEBHOOK` and
+map it in the Katalon step with `env: RUN_CLOCK_WEBHOOK: $(RUN_CLOCK_WEBHOOK)`,
+because Azure does not pass secrets to scripts on its own.
 
-## Test Suite Collections
+### Sharing a report
 
-A collection run gives one report: when each suite started and finished on the collection's clock, a timeline of every process grouped by suite, the slowest tests across all its suites, and the real time of the whole collection. Run Clock knows from the start that a run is a collection, so the first suite to finish is never reported as a run of its own. The suites that finish first only record their times, and the last one writes the report, so a collection pays for one report however many suites it has.
-
-The report also compares the collection's own Execution mode. After a Sequential run it estimates how long 2, 3 or 4 suites at once would take; after a Parallel run it estimates one suite after another. A way you have already run shows the median of its last 5 runs of that collection instead of an estimate. When another way is at least 15% faster, it says which setting to change. Suites on one machine slow each other down, so run a suggested setting once to measure it before you keep it.
-
-The per-suite settings advice comes from running a suite on its own, because suites that share the machine in a collection slow each other down.
-
-## The tests
-
-Every report lists the slowest tests of the run. Once a suite has run three times with history on, each test is also compared with its median over the suite's recent runs, and tests that took longer than usual by `slowerBy` percent (and by at least a second) are listed.
-
-For a suite with at least six tests and a minute of test time, the report also shows how to spread it over 2, 3 or 4 machines: the tests of each part and how long the longest part takes. Each part becomes a suite of its own, for example one per CI agent.
-
-## Slower than usual
-
-When a suite's real time is `slowerBy` percent above the median of its last five runs with the same setting (and at least two seconds above it), the report and the Log Viewer say so, with the median it was compared against. It needs three earlier runs with that setting.
-
-## Large suites
-
-With parallel execution, Katalon starts one process per test case, so a suite of 300 tests is 300 processes. Above 40 processes the dial shows how many processes were starting up, running tests and alive at each moment instead of one ring per process, the timeline uses one thin row per process, and the tables show their first 20 rows with a button for the rest.
-
-## Sharing a report
-
-`summary.html` is one file with no external resources and a content security policy that blocks all network access, so it opens offline and cannot send anything anywhere. It contains your suite and test case names, process IDs and timings, but no file paths from your machine, credentials or test data. Check the names are fine to share before posting a report publicly.
-
-## Uninstall
-
-```
-npx katalon-run-clock uninstall "C:\path\to\your\katalon-project"
-```
-
-Recorded timings in `Reports/` are kept.
+`summary.html` is one file with no external resources and a content
+security policy that blocks all network access, so it opens offline and
+cannot send anything anywhere. It contains your suite and test case names,
+process IDs and timings, but no file paths from your machine, credentials
+or test data. Check the names are fine to share before posting a report
+publicly.
 
 ## Limits
 
-- Time Katalon spends generating reports after the last process exits is not included.
-- Run Clock writes its report inside the after-suite process, which takes a second or two in a fresh process, once per run. That time is measured, shown as its own phase on the timeline, and left out of the real time and of every comparison, so Run Clock never tilts the advice.
-- If a process is killed rather than exiting normally, its shutdown time is not recorded, and a test it was running is shown as incomplete.
-- A run stopped before its last suite finishes has no report until the next run in the project finishes, which writes it.
-- Estimates are given for single-suite runs, not for collections.
-- The report's figures use Sitka, a serif that comes with Windows. Other systems show their own serif.
+- Time Katalon spends generating its own reports after the last process
+  exits is not included.
+- Run Clock writes its report inside the after-suite process, once per run.
+  That takes a second or two in a fresh process; it is measured, shown on
+  the timeline, and left out of the real time and of every comparison.
+- If a process is killed rather than exiting normally, its shutdown time
+  is not recorded, and a test it was running is shown as incomplete.
+- A run stopped before its last suite finishes has no report until the next
+  run in the project finishes, which writes it.
+- The report's figures use Sitka, a serif that comes with Windows. Other
+  systems show their own serif.
 
-## Author
+## Troubleshooting
 
-Monty Bagati, bagati.monty@gmail.com
+**No report opened after a run.** Check `openReport` in
+`runclock.properties`; runs from Katalon Runtime Engine and CI never open
+one. The report is still written to `Reports/<run>/run-clock/summary.html`.
+
+**Nothing changed after installing or upgrading.** Katalon Studio compiles
+only the files it knows about. Right-click **Keywords**, **Test Listeners**
+and **Include** in Tests Explorer and choose **Refresh**, or close and
+reopen the project.
+
+**`Run Clock: the report is written when the last suite of this collection
+finishes.`** in the Log Viewer of a collection's suite. Expected: only the
+last suite to finish writes the collection's report, so the others skip it.
+
+**The All runs page does not list a run.** That run had `history` set to
+`readonly` or `off`, or its folder under `Reports` was deleted.
+
+**Messages starting with `[RunClock]`** in the console explain anything
+Run Clock could not do, such as a history file it could not lock. Run
+Clock never fails or changes a test because of them.
+
+## Support
+
+Questions, bug reports, or help setting Run Clock up in a CI pipeline:
+**bagati.monty@gmail.com**.
+
+## License
+
+Free to use. Copying, sharing and selling are not allowed. See
+[`LICENSE.md`](LICENSE.md).
+
+Copyright 2026 Monty Bagati.
