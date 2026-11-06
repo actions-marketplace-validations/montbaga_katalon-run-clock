@@ -1,0 +1,83 @@
+# Azure Pipelines: a Katalon test suite with Run Clock, on a Microsoft-hosted agent.
+#
+# Before the first run:
+# - Install Run Clock in the project and commit it (npx katalon-run-clock install <project>).
+#   Nothing is installed here.
+# - Install the "Katalon for Azure DevOps" extension from the Visual Studio Marketplace.
+# - Under Pipelines > Library, create a variable group named katalon with a secret
+#   variable KatalonApiKey holding your Katalon Runtime Engine API key.
+#
+# Works on windows-latest, ubuntu-latest and macOS-latest.
+
+trigger:
+  - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - group: katalon
+  # main adds each run to the history; other branches are compared with it and change nothing
+  - ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
+    - name: RUN_CLOCK_HISTORY
+      value: 'on'
+  - ${{ else }}:
+    - name: RUN_CLOCK_HISTORY
+      value: 'readonly'
+
+steps:
+  - checkout: self
+
+  # Linux only: Katalon needs a display, and the wait stops it starting before Xvfb is ready
+  - bash: |
+      set -e
+      sudo apt-get update
+      sudo apt-get install -y xvfb x11-utils
+      Xvfb :99 -screen 0 1920x1080x24 &
+      for i in $(seq 1 30); do
+        xdpyinfo -display :99 >/dev/null 2>&1 && break
+        sleep 1
+      done
+      echo "##vso[task.setvariable variable=DISPLAY]:99"
+    displayName: 'Start Xvfb'
+    condition: eq(variables['Agent.OS'], 'Linux')
+
+  # Linux only: Katalon 11 needs Java 21, which ubuntu-latest does not default to
+  - bash: |
+      echo "##vso[task.setvariable variable=JAVA_HOME]$JAVA_HOME_21_X64"
+      echo "##vso[task.prependpath]$JAVA_HOME_21_X64/bin"
+    displayName: 'Use Java 21'
+    condition: eq(variables['Agent.OS'], 'Linux')
+
+  # Run Clock's history: restored here, saved again at the end of the job.
+  # A pull request starts from its own branch's history, or else from main's.
+  - task: Cache@2
+    displayName: 'Run Clock history'
+    inputs:
+      key: 'run-clock | "$(Agent.OS)" | "$(Build.SourceBranchName)" | "$(Build.BuildId)"'
+      restoreKeys: |
+        run-clock | "$(Agent.OS)" | "$(Build.SourceBranchName)"
+        run-clock | "$(Agent.OS)" | "main"
+      path: 'Reports/run-clock'
+
+  # Azure saves the cache only when the job succeeds. continueOnError keeps the job going
+  # when a test fails, so the run is still kept; the build then shows as partially succeeded.
+  - task: katalonTask@1
+    displayName: 'Run Katalon tests'
+    continueOnError: true
+    inputs:
+      version: '11.6.0'
+      executeArgs: '-retry=0 -testSuitePath="Test Suites/Smoke" -browserType="Chrome (headless)" -executionProfile="default" -apiKey=$(KatalonApiKey)'
+
+  # Run Clock's summary on the build's Summary tab
+  - bash: echo "##vso[task.uploadsummary]$(Build.SourcesDirectory)/Reports/run-clock/ci-summary.md"
+    displayName: 'Run Clock summary'
+    condition: succeededOrFailed()
+
+  # each run's report is Reports/<run>/run-clock/summary.html in this artifact
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish reports'
+    condition: succeededOrFailed()
+    inputs:
+      PathtoPublish: 'Reports'
+      ArtifactName: 'katalon-reports'

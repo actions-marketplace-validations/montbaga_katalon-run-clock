@@ -5,6 +5,8 @@
   "keywords": [
     "katalon",
     "katalon-studio",
+    "katalon-runtime-engine",
+    "test-listener",
     "parallel-execution",
     "test-suite",
     "performance"
@@ -14,6 +16,11 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/montbaga/katalon-run-clock.git"
+  },
+  "homepage": "https://github.com/montbaga/katalon-run-clock#readme",
+  "bugs": {
+    "url": "https://github.com/montbaga/katalon-run-clock/issues",
+    "email": "bagati.monty@gmail.com"
   },
   "bin": {
     "katalon-run-clock": "bin/cli.js"

@@ -2,6 +2,8 @@
 
 [![Tested on Katalon Studio 11.6](https://img.shields.io/badge/Katalon%20Studio-tested%20on%2011.6-2a2a2a)](https://katalon.com/katalon-studio)
 [![Installer: Node.js 14 or newer, tested on 24](https://img.shields.io/badge/installer-Node.js%2014%20or%20newer%2C%20tested%20on%2024-2a2a2a)](https://nodejs.org)
+[![Runs on Windows, macOS and Linux](https://img.shields.io/badge/runs%20on-Windows%20%7C%20macOS%20%7C%20Linux-2a2a2a)](#run-clock-in-ci)
+[![npm](https://img.shields.io/npm/v/katalon-run-clock?color=2a2a2a)](https://www.npmjs.com/package/katalon-run-clock)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-ff5b1f)](LICENSE.md)
 
 Shows how long a Katalon Studio run really took, where the time went, and
@@ -9,7 +11,12 @@ whether parallel execution makes each test suite and Test Suite Collection
 faster or slower. A drop-in Test Listener: no plugin, no changes to your
 Test Cases or Test Suites.
 
-See [`ARCHITECTURE.md`](ARCHITECTURE.md) for how it is built.
+**[See it in action](#see-it-in-action)** ·
+**[Install](#install--uninstall)** ·
+**[CI pipelines](#run-clock-in-ci)** ·
+**[Configuration](#configuration)** ·
+**[Troubleshooting](#troubleshooting)** ·
+**[Architecture](ARCHITECTURE.md)**
 
 ![A Run Clock report for a suite of four API tests: 27.2 s of real time with Parallel, max 4, against 6.6 s with parallel execution off](docs/images/report-hero.jpg)
 
@@ -108,9 +115,10 @@ of faster.
 
 ## Requirements
 
-- Katalon Studio 11. Tested on 11.6.
-- Windows, macOS or Linux. Tested on Windows 11, and on Ubuntu and macOS
-  agents in Azure Pipelines.
+- Katalon Studio 11, or Katalon Runtime Engine 11 for command-line and CI
+  runs. Tested on 11.6.
+- Windows, macOS or Linux. Tested on Windows 11, and on Windows, Ubuntu
+  and macOS agents in Azure Pipelines.
 - Parallel execution within a suite needs Katalon Studio 11.4+ and an
   Enterprise licence. Run Clock also measures runs without it.
 - Node.js, any version from 14 on, for the installer only (tested on 24).
@@ -123,6 +131,10 @@ of faster.
 npx katalon-run-clock install "C:\path\to\your\katalon-project"
 npx katalon-run-clock uninstall "C:\path\to\your\katalon-project"
 ```
+
+On macOS or Linux, use that system's path, for example
+`npx katalon-run-clock install ~/Katalon/my-project`. To upgrade, run
+`npx katalon-run-clock@latest install` with the same folder.
 
 **From a copy of this repository:**
 
@@ -285,58 +297,60 @@ cannot overwrite each other. If the lock cannot be taken within 10
 seconds, the run's own report is still written and only the history is
 skipped.
 
-## CI setup
+## Run Clock in CI
 
-A CI agent that starts from a clean checkout has no history, so every build
-looks like the first. Keep the history folder between builds, and use
-`readonly` for builds that should not change it. The run's summary is
-written to `Reports/run-clock/ci-summary.md`, and on GitHub Actions it is
-added to the job summary page automatically.
+Run Clock lives in your project, so a CI build needs no install step:
+commit the files the installer adds, and every build that runs Katalon
+records its own times. On a CI agent it never opens a browser.
 
-### GitHub Actions
+| Where | What you get |
+|---|---|
+| The build's summary page | Real time, setting, start-up per process and test time. GitHub Actions shows it by itself; Azure Pipelines needs one line, in the example |
+| The build's artifacts | Each run's full report, `Reports/<run>/run-clock/summary.html`: one file that opens offline |
+| The Katalon log | The same summary as in the Log Viewer |
 
-```yaml
-- uses: actions/cache@v4
-  with:
-    path: Reports/run-clock
-    key: run-clock-${{ github.ref_name }}-${{ github.run_id }}
-    restore-keys: |
-      run-clock-${{ github.ref_name }}-
-      run-clock-main-
-- run: katalonc -noSplash -runMode=console -projectPath="$PWD" -testSuitePath="Test Suites/Smoke" -apiKey="$KATALON_API_KEY"
-  env:
-    RUN_CLOCK_HISTORY: ${{ github.ref_name == 'main' && 'on' || 'readonly' }}
-```
+### Ready-to-use pipelines
 
-### Azure Pipelines
+| File | For |
+|---|---|
+| [`examples/azure-pipelines.yml`](examples/azure-pipelines.yml) | Azure Pipelines, with the Katalon for Azure DevOps extension |
+| [`examples/github-actions.yml`](examples/github-actions.yml) | GitHub Actions, with Katalon's GitHub Action |
 
-```yaml
-variables:
-  ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
-    RUN_CLOCK_HISTORY: on
-  ${{ else }}:
-    RUN_CLOCK_HISTORY: readonly
+Change `Test Suites/Smoke` to your suite, or use
+`-testSuiteCollectionPath` for a collection. On Linux, Katalon itself needs
+a display and Java 21, so both files start Xvfb and switch to Java 21 there
+first.
 
-steps:
-- task: Cache@2
-  inputs:
-    key: 'run-clock | "$(Build.SourceBranchName)" | "$(Build.BuildId)"'
-    restoreKeys: |
-      run-clock | "$(Build.SourceBranchName)"
-      run-clock | "main"
-    path: Reports/run-clock
-- script: katalonc -noSplash -runMode=console -projectPath="$(Build.SourcesDirectory)" -testSuitePath="Test Suites/Smoke" -apiKey="$(KATALON_API_KEY)"
-- script: echo "##vso[task.uploadsummary]$(Build.SourcesDirectory)/Reports/run-clock/ci-summary.md"
-  condition: always()
-```
+### Keeping history between builds
 
-Pipeline variables reach Katalon as environment variables, so
-`RUN_CLOCK_HISTORY` needs no `env:` block. To post to Slack, add your
-webhook address as a secret pipeline variable named `RUN_CLOCK_WEBHOOK` and
-map it in the Katalon step with `env: RUN_CLOCK_WEBHOOK: $(RUN_CLOCK_WEBHOOK)`,
-because Azure does not pass secrets to scripts on its own.
+A CI agent starts empty. Without help, every build looks like the first:
+no medians, no "slower than usual", and settings you ran in earlier builds
+show as estimates. Two things fix that:
 
-### Sharing a report
+1. **Keep the history folder.** Restore `Reports/run-clock` before Katalon
+   runs and save it after. Both examples use the CI's own cache for this.
+2. **Let only main add to it.** Set `RUN_CLOCK_HISTORY` to `on` for main
+   and `readonly` for every other branch. A pull request is then compared
+   with main's runs without changing them.
+
+| | Azure Pipelines | GitHub Actions |
+|---|---|---|
+| Keeping the folder | `Cache@2` on `Reports/run-clock` | `actions/cache/restore` before the tests, `actions/cache/save` after |
+| When a test fails | Azure saves a cache only when the job succeeds, so the example marks the Katalon step `continueOnError: true`. The build then shows as partially succeeded | `actions/cache/save` runs with `if: always()`, so the run is kept |
+| One history for each | agent OS and branch | runner OS and branch |
+
+Keep a separate history for each operating system: start-up times on a
+Linux agent and a macOS agent are too different to share medians.
+
+On a self-hosted agent, you can skip the cache: set
+`RUN_CLOCK_HISTORY_DIR` to a folder the agent keeps between builds.
+
+To post each run to Slack, add your incoming webhook address as a secret
+variable named `RUN_CLOCK_WEBHOOK`. On Azure Pipelines, also map it in the
+Katalon step with `env: RUN_CLOCK_WEBHOOK: $(RUN_CLOCK_WEBHOOK)`, because
+Azure does not pass secrets to tasks on its own.
+
+## Sharing a report
 
 `summary.html` is one file with no external resources and a content
 security policy that blocks all network access, so it opens offline and

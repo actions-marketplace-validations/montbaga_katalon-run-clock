@@ -1,0 +1,78 @@
+# GitHub Actions: a Katalon test suite with Run Clock. Save as .github/workflows/katalon.yml.
+#
+# Before the first run:
+# - Install Run Clock in the project and commit it (npx katalon-run-clock install <project>).
+#   Nothing is installed here.
+# - Add a repository secret named KATALON_API_KEY holding your Katalon Runtime Engine API key.
+#
+# Run Clock adds its summary to the job's summary page by itself.
+
+name: Katalon
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  katalon:
+    runs-on: ubuntu-latest
+    env:
+      # main adds each run to the history; other branches are compared with it and change nothing
+      RUN_CLOCK_HISTORY: ${{ github.ref_name == github.event.repository.default_branch && 'on' || 'readonly' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Linux only: Katalon needs a display, and the wait stops it starting before Xvfb is ready
+      - name: Start Xvfb
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb x11-utils
+          Xvfb :99 -screen 0 1920x1080x24 &
+          for i in $(seq 1 30); do
+            xdpyinfo -display :99 >/dev/null 2>&1 && break
+            sleep 1
+          done
+          echo "DISPLAY=:99" >> "$GITHUB_ENV"
+
+      # Linux only: Katalon 11 needs Java 21, which ubuntu-latest does not default to
+      - name: Use Java 21
+        if: runner.os == 'Linux'
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME_21_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_21_X64/bin" >> "$GITHUB_PATH"
+
+      # Run Clock's history. A pull request starts from its own branch's history, or else from main's.
+      - name: Restore Run Clock history
+        uses: actions/cache/restore@v4
+        with:
+          path: Reports/run-clock
+          key: run-clock-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            run-clock-${{ runner.os }}-${{ github.ref_name }}-
+            run-clock-${{ runner.os }}-${{ github.event.repository.default_branch }}-
+
+      - name: Run Katalon tests
+        uses: katalon-studio/katalon-studio-github-action@v4.0
+        with:
+          version: '11.6.0'
+          projectPath: ${{ github.workspace }}
+          args: '-noSplash -retry=0 -testSuitePath="Test Suites/Smoke" -browserType="Chrome (headless)" -executionProfile="default" -apiKey=${{ secrets.KATALON_API_KEY }}'
+
+      # saved even when a test fails, so every run is kept
+      - name: Save Run Clock history
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: Reports/run-clock
+          key: run-clock-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+
+      # each run's report is Reports/<run>/run-clock/summary.html in this artifact
+      - name: Publish reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: katalon-reports
+          path: Reports
