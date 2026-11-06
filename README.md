@@ -427,6 +427,9 @@ publicly.
 
 ## Limits
 
+- An estimate for a setting you have not run can be off by half or more,
+  because processes started at the same time slow each other down. Run the
+  setting once to measure it.
 - Time Katalon spends generating its own reports after the last process
   exits is not included.
 - Run Clock writes its report inside the after-suite process, once per run.
