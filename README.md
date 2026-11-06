@@ -1,7 +1,7 @@
 # Katalon Run Clock
 
 [![Tested on Katalon Studio 11.6](https://img.shields.io/badge/Katalon%20Studio-tested%20on%2011.6-2a2a2a)](https://katalon.com/katalon-studio)
-[![Node.js 14+ for the installer](https://img.shields.io/badge/installer-Node.js%2014%2B-2a2a2a)](https://nodejs.org)
+[![Installer: Node.js 14 or newer, tested on 24](https://img.shields.io/badge/installer-Node.js%2014%20or%20newer%2C%20tested%20on%2024-2a2a2a)](https://nodejs.org)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-ff5b1f)](LICENSE.md)
 
 Shows how long a Katalon Studio run really took, where the time went, and
@@ -110,7 +110,7 @@ of faster.
 - Katalon Studio 11. Tested on 11.6.
 - Parallel execution within a suite needs Katalon Studio 11.4+ and an
   Enterprise licence. Run Clock also measures runs without it.
-- Node.js 14+, for the installer only.
+- Node.js, any version from 14 on, for the installer only (tested on 24).
 
 ## Install / Uninstall
 
