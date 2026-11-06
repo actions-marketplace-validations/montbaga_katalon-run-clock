@@ -7,6 +7,12 @@
 [![npm](https://img.shields.io/npm/v/katalon-run-clock?color=2a2a2a)](https://www.npmjs.com/package/katalon-run-clock)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-ff5b1f)](LICENSE.md)
 
+
+
+https://github.com/user-attachments/assets/f1e8b4cc-31fd-436a-91a5-b183754ca1f4
+
+
+
 [![Run Clock in 30 seconds: ticking Enable Parallel Execution made four API tests take 27.2 s instead of 6.6 s](docs/video/run-clock-preview.gif)](docs/video/run-clock.mp4)
 
 The full 30-second video, with sound: [run-clock.mp4](docs/video/run-clock.mp4)
