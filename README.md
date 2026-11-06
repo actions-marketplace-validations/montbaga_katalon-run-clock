@@ -6,6 +6,10 @@
 [![npm](https://img.shields.io/npm/v/katalon-run-clock?color=2a2a2a)](https://www.npmjs.com/package/katalon-run-clock)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-ff5b1f)](LICENSE.md)
 
+[![Run Clock in 30 seconds: ticking Enable Parallel Execution made four API tests take 27.2 s instead of 6.6 s](docs/video/run-clock-preview.gif)](docs/video/run-clock.mp4)
+
+The full 30-second video, with sound: [run-clock.mp4](docs/video/run-clock.mp4)
+
 Shows how long a Katalon Studio run really took, where the time went, and
 whether parallel execution makes each test suite and Test Suite Collection
 faster or slower. A drop-in Test Listener: no plugin, no changes to your
