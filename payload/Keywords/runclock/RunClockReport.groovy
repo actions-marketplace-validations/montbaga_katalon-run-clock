@@ -230,8 +230,8 @@ class RunClockReport {
                     title : name(planRoot ?: sessionDir.fileName.toString()),
                     entity: planRoot ?: '',
                     suites: suites.collect { Suite s ->
-                        [id   : s.id, key: s.key, name: s.label, start: s.start(), end: s.end(), processes: s.procs.size(),
-                         tests: s.runs().size()]
+                        [id   : s.id, key: s.key, name: s.label, start: s.start(), end: s.end(), elapsed: s.span(),
+                         processes: s.procs.size(), tests: s.runs().size()]
                     },
                     plan  : plan,
                     tests : slowestAcross(suites)
@@ -1232,9 +1232,9 @@ class RunClockReport {
             out << row('Slower than usual', '+' + slow.percent + '%', 'median ' + secs(num(slow, 'median')) + ' over the last ' + slow.runs + ' runs with this setting')
         }
         if (options) {
-            out << '\n' << pad('Setting', 22) << padLeft('Time', 9) << '\n'
+            out << '\n' << pad('Setting', 22) << padLeft('Time', 12) << '\n'
             for (Option o : options) {
-                out << pad(label(o), 22) << padLeft((o.measured ? '' : '~') + secs(o.millis), 9) << '   ' << note(o) << '\n'
+                out << pad(label(o), 22) << padLeft((o.measured ? '' : '~') + secs(o.millis), 12) << '   ' << note(o) << '\n'
             }
             out << '\n' << adviceText(advice) << '\n'
         }
@@ -1339,17 +1339,17 @@ class RunClockReport {
         out << 'Run Clock | ' + name(planRoot ?: sessionDir.fileName.toString()) + ' | ' + sessionDir.fileName + '\n\n'
         out << row('Elapsed', secs(end - start), 'run start to last process exit, without Run Clock itself')
         out << row('Before first process', secs(suites.collect { Suite s -> s.start() }.min() - start), 'Katalon preparing the run')
-        out << '\n' << pad('Suite', 30) << padLeft('Starts', 9) << padLeft('Ends', 9) << padLeft('Elapsed', 9) <<
+        out << '\n' << pad('Suite', 30) << padLeft('Starts', 12) << padLeft('Ends', 12) << padLeft('Elapsed', 12) <<
                 padLeft('Processes', 11) << padLeft('Tests', 7) << '\n'
         for (Suite s : suites) {
-            out << pad(s.label ?: name(s.id), 30) << padLeft(secs(s.start() - start), 9) << padLeft(secs(s.end() - start), 9) <<
-                    padLeft(secs(s.span()), 9) << padLeft(String.valueOf(s.procs.size()), 11) <<
+            out << pad(s.label ?: name(s.id), 30) << padLeft(secs(s.start() - start), 12) << padLeft(secs(s.start() - start + s.span()), 12) <<
+                    padLeft(secs(s.span()), 12) << padLeft(String.valueOf(s.procs.size()), 11) <<
                     padLeft(String.valueOf(s.runs().size()), 7) << '\n'
         }
         if (plan != null) {
-            out << '\n' << pad('Collection setting', 26) << padLeft('Time', 9) << '\n'
+            out << '\n' << pad('Collection setting', 26) << padLeft('Time', 12) << '\n'
             for (Map o : (List<Map>) plan.options) {
-                out << pad((String) o.label, 26) << padLeft((o.measured ? '' : '~') + secs(num(o, 'millis')), 9) << '   ' <<
+                out << pad((String) o.label, 26) << padLeft((o.measured ? '' : '~') + secs(num(o, 'millis')), 12) << '   ' <<
                         (!o.measured ? 'estimate' : (num(o, 'runs') > 1 ? 'median of ' + o.runs + ' runs' + (o.current ? ', this setting' : '') :
                                 (o.current ? 'this run' : 'measured once'))) << '\n'
             }
@@ -1404,7 +1404,7 @@ class RunClockReport {
     }
 
     private static String row(String label, String value, String note) {
-        pad(label, 22) + padLeft(value, 9) + '   ' + note + '\n'
+        pad(label, 22) + padLeft(value, 12) + '   ' + note + '\n'
     }
 
     private static String name(String id) {

@@ -920,8 +920,8 @@ details.plan > summary { padding: 6px 0; font-size: 16px; cursor: pointer; }
         'A measured setting shows the median of its last 5 runs, so one slow or fast run does not decide the result. Estimates use the start-up time measured at the nearest setting you have run; running a setting once replaces its estimate.');
     } else if (!isSuite && D.suites && D.suites.length) {
       raceSection('settings', 'Suites, as they ran.', 'Each suite from its first process to its last, on the collection\'s clock.', 'collection clock',
-        D.suites.map(su => ({ name: su.name, from: su.start - T0, ms: su.end - su.start, cls: 'current', note: 'from +' + fmt(su.start - T0), value: fmt(su.end - su.start),
-          tip: [['From +' + fmt(su.start - T0) + ' to +' + fmt(su.end - T0)], [plural(su.processes, 'process', 'processes') + ', ' + plural(su.tests, 'test run', 'test runs')]] })), null);
+        D.suites.map(su => ({ name: su.name, from: su.start - T0, ms: su.elapsed, cls: 'current', note: 'from +' + fmt(su.start - T0), value: fmt(su.elapsed),
+          tip: [['From +' + fmt(su.start - T0) + ' to +' + fmt(su.start - T0 + su.elapsed)], [plural(su.processes, 'process', 'processes') + ', ' + plural(su.tests, 'test run', 'test runs')]] })), null);
       if (D.plan && D.plan.options && D.plan.options.length > 1) {
         const best = D.plan.options.reduce((m, o) => (o.millis < m.millis ? o : m));
         raceSection('collection', D.plan.advice ? 'This collection could finish sooner.' : 'This collection is set up well.',
@@ -1134,7 +1134,7 @@ details.plan > summary { padding: 6px 0; font-size: 16px; cursor: pointer; }
       if (!isSuite) {
         if (rows[0] && rows[0].segs[0].phase === 'prep') tlRows.push(rows[0]);
         D.suites.forEach(s => {
-          tlRows.push({ header: true, label: s.name + ', ' + fmt(s.end - s.start) });
+          tlRows.push({ header: true, label: s.name + ', ' + fmt(s.elapsed) });
           rows.filter(r => r.proc && (r.proc.group || r.proc.suite) === (s.key || s.id)).forEach(r => tlRows.push(r));
         });
       }

@@ -88,6 +88,7 @@ Windows 11. The full set, with each run's setting and real time, is in
 | 2 | Two Test Suite Collections, Sequential and Parallel with max 2, 4 and 8 | 7 |
 | 3 | The `history` setting set to `readonly`, then `off` | 2 |
 | 4 | A chat webhook, and a command-line run with `katalonc` | 2 |
+| 5 | Katalon Runtime Engine on Ubuntu and macOS agents in Azure Pipelines: a suite with max 4 and a collection of two suites at once, on each | 4 |
 
 ## Why this exists
 
@@ -108,6 +109,8 @@ of faster.
 ## Requirements
 
 - Katalon Studio 11. Tested on 11.6.
+- Windows, macOS or Linux. Tested on Windows 11, and on Ubuntu and macOS
+  agents in Azure Pipelines.
 - Parallel execution within a suite needs Katalon Studio 11.4+ and an
   Enterprise licence. Run Clock also measures runs without it.
 - Node.js, any version from 14 on, for the installer only (tested on 24).
@@ -181,21 +184,21 @@ API tests, after running each setting at least once:
 Run Clock | Run Clock API | 20261105_151304
 Parallel, Max Concurrent Instances 4, peak 4 at once
 
-Elapsed                  27.2 s   run start to last process exit, without Run Clock itself
-Before first process      0.6 s   Katalon preparing the run
-Processes                     6   4 with tests, 2 listener-only
-Start-up                 11.7 s   median, process start to first listener call
-Shutdown                  0.0 s   median, last listener call to process exit
-Tests                     9.8 s   4 runs, longest 2.6 s
-Run Clock itself          1.1 s   writing this report, left out of every time here
+Elapsed                     27.2 s   run start to last process exit, without Run Clock itself
+Before first process         0.6 s   Katalon preparing the run
+Processes                        6   4 with tests, 2 listener-only
+Start-up                    11.7 s   median, process start to first listener call
+Shutdown                     0.0 s   median, last listener call to process exit
+Tests                        9.8 s   4 runs, longest 2.6 s
+Run Clock itself             1.1 s   writing this report, left out of every time here
 
-Setting                    Time
-Parallel off              6.6 s   measured once
-Parallel, max 1          37.0 s   measured once
-Parallel, max 2          21.0 s   measured once
-Parallel, max 3          65.8 s   measured once
-Parallel, max 4          27.2 s   median of 3 runs, this setting
-Parallel, max 8          17.3 s   measured once
+Setting                       Time
+Parallel off                 6.6 s   measured once
+Parallel, max 1             37.0 s   measured once
+Parallel, max 2             21.0 s   measured once
+Parallel, max 3             65.8 s   measured once
+Parallel, max 4             27.2 s   median of 3 runs, this setting
+Parallel, max 8             17.3 s   measured once
 
 Fastest: Parallel off (Enable Parallel Execution unticked).
 ```
