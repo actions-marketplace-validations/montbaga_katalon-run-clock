@@ -531,7 +531,7 @@ details.plan > summary { padding: 6px 0; font-size: 16px; cursor: pointer; }
     const base = el('div', 'col-base');
     const ls = el('div', 'close-links');
     links.filter(Boolean).forEach(([t, h]) => ls.appendChild(link('textlink', t, h)));
-    add(base, el('p', null, '© ' + new Date(D.generated || Date.now()).getFullYear() + ' ' + DEV.name + '. Run Clock ' + D.version + '. Not affiliated with Katalon.'), ls);
+    add(base, el('p', null, '© ' + new Date(D.generated || Date.now()).getFullYear() + ' ' + DEV.name + '. Run Clock ' + D.version + '.'), ls);
     add(w, grid, base);
     s.appendChild(w);
     document.body.insertBefore(s, tip);
