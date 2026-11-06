@@ -153,6 +153,10 @@ place, so a reader never sees half a file.
 With `history=readonly` the history is read and never written. With
 `history=off` it is neither read nor written.
 
+A run leaves the All runs list when its report folder is deleted. Runs
+recorded on a CI agent are marked and stay, because a CI build never has
+the folders of earlier builds; they are listed without a link.
+
 ## The report page
 
 Every report is `report.html` with the run's data embedded as JSON in a
