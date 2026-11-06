@@ -86,6 +86,29 @@ What they show:
 >
 > **Fastest setting:** Parallel off. Untick Enable Parallel Execution in this suite's Execution Information.
 
+## Part 5: Windows, Ubuntu and macOS agents
+
+Katalon Runtime Engine 11.6 on Microsoft-hosted agents in Azure Pipelines,
+build 20261106.2: on each agent, Run Clock API with Parallel, max 4, then
+the Run Clock CI collection with its two suites at once.
+
+| Agent | Suite | Collection |
+|---|---|---|
+| windows-latest | 56.8 s | 2 min 02 s |
+| ubuntu-latest | 35.2 s | 53.1 s |
+| macOS-latest | 2 min 54 s | 2 min 58 s |
+
+| Image | What it shows |
+|---|---|
+| [build](part-5-agents/build-20261106-2.png) | The build: one job per agent, one after another, because the Katalon Runtime Engine licence is active on one machine at a time. The jobs are orange because the suite's Petstore API tests fail |
+| [suite on Ubuntu](part-5-agents/ubuntu-run-clock-api.jpg) | The report the Ubuntu agent wrote for the suite |
+| [collection on Ubuntu](part-5-agents/ubuntu-run-clock-ci.jpg) | Its collection report: both suites started at +3.8 s, and the run ended when the longer one did, at 53.1 s |
+
+What they show:
+
+- Every agent wrote one report for the suite and one for the whole collection, and the times match Katalon's own logs.
+- On the macOS agent, Katalon spent 63 to 71 s preparing each run before it started the first process. Run Clock counts that as part of the real time, which is why macOS is the slowest.
+
 ## Close-ups
 
 Eleven of the reports, one image per section at double resolution, in `sections/`:

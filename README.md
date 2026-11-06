@@ -95,7 +95,7 @@ Windows 11. The full set, with each run's setting and real time, is in
 | 2 | Two Test Suite Collections, Sequential and Parallel with max 2, 4 and 8 | 7 |
 | 3 | The `history` setting set to `readonly`, then `off` | 2 |
 | 4 | A chat webhook, and a command-line run with `katalonc` | 2 |
-| 5 | Katalon Runtime Engine on Ubuntu and macOS agents in Azure Pipelines: a suite with max 4 and a collection of two suites at once, on each | 4 |
+| 5 | Katalon Runtime Engine on Windows, Ubuntu and macOS agents in Azure Pipelines: a suite with max 4 and a collection of two suites at once, on each | 10 |
 
 ## Why this exists
 
@@ -308,6 +308,15 @@ records its own times. On a CI agent it never opens a browser.
 | The build's page | Real time, setting, start-up per process and test time. On Azure Pipelines it is on the Extensions tab |
 | The build's artifacts | Each run's full report, `Reports/<run>/run-clock/summary.html`: one file that opens offline |
 | The Katalon log | The same summary as in the Log Viewer |
+
+The same suite and collection, run on Windows, Ubuntu and macOS agents one
+after another:
+
+![An Azure Pipelines build with one job each on Windows, Ubuntu and macOS agents](docs/images/ci-azure-run.png)
+
+The report the Ubuntu agent wrote, from the build's artifacts:
+
+![A Run Clock report written on an Ubuntu agent: 35.2 s of real time with Parallel, max 4](docs/images/ci-report-linux.jpg)
 
 ### Azure Pipelines
 
