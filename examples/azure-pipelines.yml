@@ -69,8 +69,10 @@ jobs:
           version: '11.6.0'
           executeArgs: '-retry=0 -testSuitePath="Test Suites/Smoke" -browserType="Chrome (headless)" -executionProfile="default" -apiKey=$(KatalonApiKey)'
 
-      # Run Clock's summary on the build's Extensions tab
-      - bash: echo "##vso[task.uploadsummary]$(System.DefaultWorkingDirectory)/Reports/run-clock/ci-summary.md"
+      # Run Clock's table on the build's Extensions tab; the file name is the section's title
+      - bash: |
+          cp Reports/run-clock/ci-summary.md "$(Agent.TempDirectory)/Run Clock.md"
+          echo "##vso[task.uploadsummary]$(Agent.TempDirectory)/Run Clock.md"
         displayName: 'Run Clock summary'
         condition: succeededOrFailed()
 

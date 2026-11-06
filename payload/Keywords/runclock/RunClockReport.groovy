@@ -681,6 +681,15 @@ class RunClockReport {
         StringBuilder md = new StringBuilder()
         md << '### Run Clock: ' + model.title + '\n\n| | |\n|---|---|\n'
         md << '| Real time | ' + secs(num(stats, 'elapsed')) + ' |\n'
+        // tells a CI page at a glance whether earlier builds were found
+        Map current = ((List<Map>) (model.kind == 'suite' ? model.options : plan?.options))?.find { Map o -> o.current }
+        if (model.history == 'off') {
+            md << '| Usual time | not compared: history is off |\n'
+        } else if (current != null) {
+            long runs = num(current, 'runs')
+            md << '| Usual time | ' + (runs > 1 ? secs(num(current, 'millis')) + ', the median of the last ' + runs + ' runs with this setting' :
+                    'no earlier run with this setting yet') + ' |\n'
+        }
         if (model.kind == 'suite') {
             Map mode = (Map) model.mode
             md << '| Setting | ' + (mode.parallel ? 'Parallel, max ' + mode.max : 'Parallel off') + ' |\n'

@@ -299,70 +299,102 @@ skipped.
 
 ## Run Clock in CI
 
-Run Clock lives in your project, so a CI build needs no install step:
-commit the files the installer adds, and every build that runs Katalon
-records its own times. On a CI agent it never opens a browser.
+Run Clock lives in your project, so CI needs nothing extra: commit the
+files the installer adds, and every build that runs Katalon records its
+own times. On a CI agent it never opens a browser.
 
-| Where | What you get |
-|---|---|
-| The build's page | Real time, setting, start-up per process and test time. On Azure Pipelines it is on the Extensions tab |
-| The build's artifacts | Each run's full report, `Reports/<run>/run-clock/summary.html`: one file that opens offline |
-| The Katalon log | The same summary as in the Log Viewer |
+### What you see in a build
 
-The same suite and collection, run on Windows, Ubuntu and macOS agents one
-after another:
+A table on the build's page. On Azure Pipelines it is on the
+**Extensions** tab:
 
-![An Azure Pipelines build with one job each on Windows, Ubuntu and macOS agents](docs/images/ci-azure-run.png)
+![Run Clock's table on the Extensions tab of an Azure Pipelines build: real time, setting, start-up per process and tests](docs/images/ci-azure-extensions.png)
 
-The report the Ubuntu agent wrote, from the build's artifacts:
+From the second build on, a **Usual time** row shows the median of the
+earlier runs with the same setting, so you can see at a glance that the
+history is working. It says `no earlier run with this setting yet` on a
+first build, and `not compared: history is off` when history is off.
+
+The full report of every run is in the build's artifacts, as
+`<run>/run-clock/summary.html`: one file that opens offline. This one was
+written on an Ubuntu agent:
 
 ![A Run Clock report written on an Ubuntu agent: 35.2 s of real time with Parallel, max 4](docs/images/ci-report-linux.jpg)
 
-### Azure Pipelines
+### When to use it
 
-[`examples/azure-pipelines.yml`](examples/azure-pipelines.yml) is a
-complete pipeline, tested on Windows, Ubuntu and macOS agents. Change
-`Test Suites/Smoke` to your suite, or use `-testSuiteCollectionPath` for
-a collection. On Linux, Katalon itself needs a display and Java 21, so the
-pipeline starts Xvfb and switches to Java 21 there first.
+| Where | Good for |
+|---|---|
+| Your machine, Katalon Studio | Trying each parallel setting and picking the fastest. The report opens by itself after each run |
+| CI | Watching every build: its real time, what start-up costs, and a warning when a build is slower than usual |
+
+If your tests run in CI, choose the parallel setting from CI runs. A
+hosted agent starts Java much more slowly than a desktop: each process
+took 19.5 s to start on ubuntu-latest, against 11.7 s on the Windows 11 PC
+used for the images above, so the fastest setting can differ.
+
+### Set it up in Azure Pipelines
+
+1. **Install Run Clock in your project and commit it.**
+   `npx katalon-run-clock install "C:\path\to\your\katalon-project"`, then
+   commit the new files under `Test Listeners`, `Keywords/runclock` and
+   `Include/config/runclock`.
+2. **Add the pipeline.** Copy
+   [`examples/azure-pipelines.yml`](examples/azure-pipelines.yml) into your
+   repository as `azure-pipelines.yml` and change `Test Suites/Smoke` to
+   your suite, or use `-testSuiteCollectionPath` for a collection. Install
+   the Katalon for Azure DevOps extension, and under Pipelines > Library
+   create a variable group named `katalon` with a secret variable
+   `KatalonApiKey` holding your Katalon Runtime Engine API key.
+3. **Run it.** Open the build's Extensions tab for the table, and its
+   `katalon-reports` artifact for the full reports.
+
+The pipeline works on Windows, Ubuntu and macOS agents. On Linux it also
+starts a virtual display and switches to Java 21, which Katalon itself
+needs there. This is the test build that ran it on all three:
+
+![An Azure Pipelines build with one job each on Windows, Ubuntu and macOS agents](docs/images/ci-azure-run.png)
+
+### History or no history
+
+| | With history (the example as it is) | Without history |
+|---|---|---|
+| To set up | Nothing more | Set `RUN_CLOCK_HISTORY` to `off`, and remove the `Cache@2` step and the `keep_history` job |
+| Each build shows | Its real time against the usual time for its setting, measured times for settings run in earlier builds, and a warning when it is slower than usual | Its own real time, start-up and tests. Other settings are estimates |
+| Good for | Builds of your main branch, watched over time | One-off builds, or when you do not want runs kept |
+
+**Main and pull requests.** The example sets `RUN_CLOCK_HISTORY` to `on`
+for main and `readonly` for every other branch. A pull request is then
+compared with main's runs without changing them.
+
+**How the history is kept.** A CI agent starts empty, so the example
+restores `Reports/run-clock` from Azure's cache before the tests and saves
+it after. Azure saves a cache only when its job succeeds, so a second small
+job, `keep_history`, saves it: a build whose tests fail stays red and still
+keeps its run. Each operating system keeps its own history, because
+start-up on a Linux agent and a macOS agent is too different to share
+medians.
+
+**Runs from earlier builds** stay on the All runs page, marked *Not on this
+machine*: their reports are in those builds' artifacts.
+
+**On a self-hosted agent** you can skip the cache: set
+`RUN_CLOCK_HISTORY_DIR` to a folder the agent keeps between builds.
 
 ### Other CI tools
 
 Run Clock runs inside Katalon, not in the pipeline, so it works the same
 in GitHub Actions, GitLab CI, Jenkins or any tool that runs Katalon Runtime
-Engine. Keep `Reports/run-clock` between builds with that tool's cache, as
-below. On GitHub Actions, the summary appears on the job's summary page by
-itself.
+Engine. Keep `Reports/run-clock` between builds with that tool's cache, and
+set `RUN_CLOCK_HISTORY` by branch as above. On GitHub Actions, the table
+appears on the job's summary page by itself.
 
-### Keeping history between builds
+### Posting to Slack
 
-A CI agent starts empty. Without help, every build looks like the first:
-no medians, no "slower than usual", and settings you ran in earlier builds
-show as estimates. Two things fix that:
-
-1. **Keep the history folder.** Restore `Reports/run-clock` before Katalon
-   runs and save it after, with the CI tool's cache. Keep one cache for
-   each operating system: start-up times on a Linux agent and a macOS agent
-   are too different to share medians.
-2. **Let only main add to it.** Set `RUN_CLOCK_HISTORY` to `on` for main
-   and `readonly` for every other branch. A pull request is then compared
-   with main's runs without changing them.
-
-Azure saves a cache only when its job succeeds, so the example saves the
-history in a second small job that always runs. A build whose tests fail
-stays red and still keeps its run.
-
-Runs recorded on a CI agent stay on the All runs page and in every
-comparison, even though the next build does not have their report folders.
-They are listed without a link to their report.
-
-On a self-hosted agent, you can skip the cache: set
-`RUN_CLOCK_HISTORY_DIR` to a folder the agent keeps between builds.
-
-To post each run to Slack, add your incoming webhook address as a secret
-variable named `RUN_CLOCK_WEBHOOK`. On Azure Pipelines, also map it in the
-Katalon step with `env: RUN_CLOCK_WEBHOOK: $(RUN_CLOCK_WEBHOOK)`, because
-Azure does not pass secrets to tasks on its own.
+Add your incoming webhook address as a secret variable named
+`RUN_CLOCK_WEBHOOK`. On Azure Pipelines, also map it in the Katalon step
+with `env: RUN_CLOCK_WEBHOOK: $(RUN_CLOCK_WEBHOOK)`, because Azure does not
+pass secrets to tasks on its own.
 
 ## Sharing a report
 
