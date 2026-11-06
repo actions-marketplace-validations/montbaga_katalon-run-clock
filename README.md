@@ -95,7 +95,7 @@ Windows 11. The full set, with each run's setting and real time, is in
 | 2 | Two Test Suite Collections, Sequential and Parallel with max 2, 4 and 8 | 7 |
 | 3 | The `history` setting set to `readonly`, then `off` | 2 |
 | 4 | A chat webhook, and a command-line run with `katalonc` | 2 |
-| 5 | Katalon Runtime Engine on Windows, Ubuntu and macOS agents in Azure Pipelines: a suite with max 4 and a collection of two suites at once, on each | 10 |
+| 5 | Katalon Runtime Engine on Windows, Ubuntu and macOS agents in Azure Pipelines: a suite with max 4 and a collection of two suites at once on each agent, over four builds, with the history kept from one build to the next | 22 |
 
 ## Why this exists
 

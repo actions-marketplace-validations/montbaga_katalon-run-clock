@@ -108,6 +108,13 @@ What they show:
 
 - Every agent wrote one report for the suite and one for the whole collection, and the times match Katalon's own logs.
 - On the macOS agent, Katalon spent 63 to 71 s preparing each run before it started the first process. Run Clock counts that as part of the real time, which is why macOS is the slowest.
+- Two more builds then ran with the history kept between builds, as in [`examples/azure-pipelines.yml`](../../examples/azure-pipelines.yml). Their tests failed, and the history was still kept: on every agent the fourth build compared its suite and its collection with the third ("median of 2 runs"), and its All runs page listed both builds.
+
+| Agent | Suite, build 3 and 4 | Collection, build 3 and 4 |
+|---|---|---|
+| windows-latest | 62.4 s, 62.0 s | 74.1 s, 111.5 s |
+| ubuntu-latest | 35.0 s, 33.4 s | 52.5 s, 53.1 s |
+| macOS-latest | 2 min 33 s, 2 min 51 s | 2 min 55 s, 3 min 03 s |
 
 ## Close-ups
 
