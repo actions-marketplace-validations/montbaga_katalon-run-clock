@@ -54,6 +54,34 @@ jobs:
           if node bin/cli.js install "$RUNNER_TEMP/not-a-project"; then echo "installed into a folder with no .prj"; exit 1; fi
           test "$(node bin/cli.js --version)" = "$(tr -d '\r\n' < VERSION)"
 
+  action:
+    name: GitHub Action, ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create a Katalon project to install into
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/Action Project"
+          touch "$RUNNER_TEMP/Action Project/Action Project.prj"
+
+      - uses: ./
+        with:
+          project-path: ${{ runner.temp }}/Action Project
+
+      - name: Check the files landed
+        shell: bash
+        run: |
+          P="$RUNNER_TEMP/Action Project"
+          test -f "$P/Test Listeners/RunClockListener.groovy"
+          test -f "$P/Keywords/runclock/RunClockReport.groovy"
+          test -f "$P/Include/config/runclock/report.html"
+
   checks:
     name: Report code and package
     runs-on: ubuntu-latest

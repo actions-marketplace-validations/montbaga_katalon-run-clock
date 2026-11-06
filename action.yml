@@ -1,0 +1,21 @@
+name: 'Katalon Run Clock'
+description: 'Real time for every Katalon run: where it went, and whether parallel execution makes each suite faster or slower.'
+author: 'Monty Bagati'
+branding:
+  icon: 'clock'
+  color: 'orange'
+
+inputs:
+  project-path:
+    description: 'Path to the Katalon Studio project (the folder containing the .prj file)'
+    required: false
+    default: '.'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Run Clock
+      shell: bash
+      env:
+        PROJECT_PATH: ${{ inputs.project-path }}
+      run: node "$GITHUB_ACTION_PATH/bin/cli.js" install "$PROJECT_PATH"

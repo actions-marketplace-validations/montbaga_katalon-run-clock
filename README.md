@@ -384,13 +384,30 @@ machine*: their reports are in those builds' artifacts.
 **On a self-hosted agent** you can skip the cache: set
 `RUN_CLOCK_HISTORY_DIR` to a folder the agent keeps between builds.
 
+### GitHub Actions
+
+Run Clock is also a [GitHub Action](https://github.com/marketplace/actions/katalon-run-clock).
+Use it if you would rather not commit Run Clock's files: it installs them
+into the checkout before Katalon runs, at the version you pin.
+
+```yaml
+- uses: montbaga/katalon-run-clock@v1
+  with:
+    project-path: ${{ github.workspace }}
+```
+
+Run Clock's table appears on the job's summary page by itself. To keep the
+history between builds, restore `Reports/run-clock` with
+`actions/cache/restore` before the tests and save it with
+`actions/cache/save` and `if: always()` after them, so a build whose
+tests fail still keeps its run.
+
 ### Other CI tools
 
 Run Clock runs inside Katalon, not in the pipeline, so it works the same
-in GitHub Actions, GitLab CI, Jenkins or any tool that runs Katalon Runtime
-Engine. Keep `Reports/run-clock` between builds with that tool's cache, and
-set `RUN_CLOCK_HISTORY` by branch as above. On GitHub Actions, the table
-appears on the job's summary page by itself.
+in GitLab CI, Jenkins or any tool that runs Katalon Runtime Engine. Keep
+`Reports/run-clock` between builds with that tool's cache, and set
+`RUN_CLOCK_HISTORY` by branch as above.
 
 ### Posting to Slack
 
