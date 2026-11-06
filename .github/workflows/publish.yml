@@ -1,7 +1,7 @@
 name: Publish to npm
 
-# Runs when a GitHub release is published. Needs a repository secret NPM_TOKEN:
-# an npm access token that can publish katalon-run-clock.
+# Runs when a GitHub release is published. npm trusts this workflow through Trusted Publishing
+# (npmjs.com > katalon-run-clock > Settings), so no token is stored here.
 on:
   release:
     types: [published]
@@ -20,16 +20,20 @@ jobs:
           node-version: 24
           registry-url: 'https://registry.npmjs.org'
 
-      # the release tag, package.json and VERSION must agree, or nothing is published
+      # the release tag, package.json and VERSION must agree; a version already on npm is skipped
       - name: Check the version
+        id: version
         env:
           TAG: ${{ github.event.release.tag_name }}
         run: |
           V=$(node -p "require('./package.json').version")
           test "v$V" = "$TAG" || { echo "Release tag $TAG does not match package.json $V"; exit 1; }
           test "$V" = "$(tr -d '\r\n' < VERSION)" || { echo "VERSION file does not match package.json $V"; exit 1; }
+          if npm view "katalon-run-clock@$V" version > /dev/null 2>&1; then
+            echo "katalon-run-clock $V is already on npm"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Publish
-        run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        if: steps.version.outputs.skip != 'true'
+        run: npm publish --access public
