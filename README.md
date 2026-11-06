@@ -180,12 +180,38 @@ Run any test suite or collection as usual. When a run started from Katalon
 Studio finishes, its report opens in your browser. Runs from Katalon
 Runtime Engine and CI servers never open a browser.
 
-Each run's report is `Reports/<run>/run-clock/summary.html`, inside
-Katalon's own folder for that run. Every run is also listed in
-`Reports/run-clock/index.html`, newest first. From there you can open any
-run's report, pick a suite to see its real time across runs, or tick two
-runs to compare them. Runs disappear from the list when you delete their
-folder under `Reports`, except runs from CI builds.
+**Where the reports are.** Katalon keeps every run in the project's
+`Reports` folder, one folder per run named after its start time. Run Clock
+writes into the same place:
+
+```
+Reports/
+├── 20261105_151304/                  one run, Katalon's folder named by its start time
+│   ├── Run Clock API/...             Katalon's own reports: HTML, JUnit XML, CSV, logs
+│   └── run-clock/
+│       ├── summary.html              Run Clock's report for this run
+│       ├── summary.txt               the same summary as in the Log Viewer
+│       ├── summary.md                the table shown on a CI build's page
+│       └── *.jsonl                   what Run Clock recorded during the run
+│
+└── run-clock/                        shared by every run in the project
+    ├── index.html                    the All runs page
+    ├── history.jsonl, runs.jsonl,    what Run Clock remembers, for comparing runs
+    │   tests/
+    └── ci-summary.md                 the latest run's table, for CI
+```
+
+**`summary.html`** is the report for one run: the dial with the real time,
+where the time went, the race of parallel settings, the timeline of every
+process and the slowest tests. Every run gets its own, and after a run from
+Katalon Studio it opens in your browser by itself. It is one file that
+works offline, so you can attach it to an email or a ticket.
+
+**`index.html`** is the All runs page: every run in the project, newest
+first. From there you can open any run's report, pick a suite to see its
+real time across runs, or tick two runs to compare them. It is rewritten
+after every run. Runs disappear from the list when you delete their folder
+under `Reports`, except runs from CI builds.
 
 To compare settings for a suite, run it once with each setting you want
 measured. The setting is under Test Suite > Execution Information >
