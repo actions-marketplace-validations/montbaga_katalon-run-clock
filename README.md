@@ -9,6 +9,12 @@
 
 https://github.com/user-attachments/assets/f1e8b4cc-31fd-436a-91a5-b183754ca1f4
 
+[![Open a sample report](https://img.shields.io/badge/%E2%96%B6%20Open%20a%20sample%20report-ff5b1f?style=for-the-badge)](https://montbaga.github.io/katalon-run-clock/sample/Reports/20261105_151304/run-clock/summary.html)
+[![Open a collection report](https://img.shields.io/badge/Collection%20report-2a2a2a?style=for-the-badge)](https://montbaga.github.io/katalon-run-clock/sample/Reports/20261105_155603/run-clock/summary.html)
+[![Open the All runs page](https://img.shields.io/badge/All%20runs%20page-2a2a2a?style=for-the-badge)](https://montbaga.github.io/katalon-run-clock/sample/Reports/run-clock/index.html)
+
+Real reports from 22 runs, live in your browser. Nothing to install.
+
 Shows how long a Katalon Studio run really took, where the time went, and
 whether parallel execution makes each test suite and Test Suite Collection
 faster or slower. A drop-in Test Listener: no plugin, no changes to your
@@ -21,10 +27,9 @@ Test Cases or Test Suites.
 **[Troubleshooting](#troubleshooting)** ·
 **[Architecture](ARCHITECTURE.md)**
 
-Open real reports in your browser: [a test suite](https://montbaga.github.io/katalon-run-clock/sample/Reports/20261105_151304/run-clock/summary.html) ·
-[a Test Suite Collection](https://montbaga.github.io/katalon-run-clock/sample/Reports/20261105_155603/run-clock/summary.html) · [the All runs page](https://montbaga.github.io/katalon-run-clock/sample/Reports/run-clock/index.html).
+The screenshots below are real reports. Click any of them to open the page itself.
 
-![A Run Clock report for a suite of four API tests: 27.2 s of real time with Parallel, max 4, against 6.6 s with parallel execution off](docs/images/report-hero.jpg)
+[![A Run Clock report for a suite of four API tests: 27.2 s of real time with Parallel, max 4, against 6.6 s with parallel execution off](docs/images/report-hero.jpg)](https://montbaga.github.io/katalon-run-clock/sample/Reports/20261105_151304/run-clock/summary.html)
 
 ## See It in Action
 
@@ -44,40 +49,40 @@ Every parallel setting of the suite, raced on one clock. For these four
 short API tests, running them one after another wins: 6.6 s, against
 17.3 s at best with parallel execution on.
 
-![Every parallel setting of a suite raced against the others. Parallel off finishes first in 6.6 s](docs/images/report-settings.jpg)
+[![Every parallel setting of a suite raced against the others. Parallel off finishes first in 6.6 s](docs/images/report-settings.jpg)](https://montbaga.github.io/katalon-run-clock/sample/Reports/20261105_151304/run-clock/summary.html#settings)
 
 **4. See where the time went**
 
 In a parallel run, most of the process time can be Java start-up rather
 than testing. In this run, 84% of it was.
 
-![Where the process time went: 84% start-up, 14% running tests](docs/images/report-time.jpg)
+[![Where the process time went: 84% start-up, 14% running tests](docs/images/report-time.jpg)](https://montbaga.github.io/katalon-run-clock/sample/Reports/20261105_151304/run-clock/summary.html#time)
 
 **5. For a Test Suite Collection, compare its own Execution mode**
 
 Every way you have run the collection, side by side. All five suites at
 once took 91.1 s, against 3 min 10 s one after another.
 
-![A collection of five suites run one after another, two, four and all five at once. All five at once finishes first](docs/images/report-collection.jpg)
+[![A collection of five suites run one after another, two, four and all five at once. All five at once finishes first](docs/images/report-collection.jpg)](https://montbaga.github.io/katalon-run-clock/sample/Reports/20261105_155603/run-clock/summary.html#collection)
 
 Every Java process of the run, second by second, grouped by suite:
 
-![The timeline of a five-suite collection, one row per process, grouped by suite, with a processes running strip](docs/images/report-timeline.jpg)
+[![The timeline of a five-suite collection, one row per process, grouped by suite, with a processes running strip](docs/images/report-timeline.jpg)](https://montbaga.github.io/katalon-run-clock/sample/Reports/20261105_173339/run-clock/summary.html#timeline)
 
 **6. Get told when a run is slower than usual**
 
 The report, the Log Viewer and the chat message all say so.
 
-![A report warning that the run was 137% slower than usual for Parallel, max 4](docs/images/report-slower.jpg)
+[![A report warning that the run was 137% slower than usual for Parallel, max 4](docs/images/report-slower.jpg)](https://montbaga.github.io/katalon-run-clock/sample/Reports/20261105_191030/run-clock/summary.html)
 
 **7. Find every run in one place**
 
 `Reports/run-clock/index.html` lists every run in the project. Pick a suite
 to see its real time run by run, or tick two runs to compare them.
 
-![Real time of each run of a suite, oldest on the left](docs/images/all-runs-history.jpg)
+[![Real time of each run of a suite, oldest on the left](docs/images/all-runs-history.jpg)](https://montbaga.github.io/katalon-run-clock/sample/Reports/run-clock/index.html#history)
 
-![Two runs of a collection side by side: 3 min 10 s one after another, 91.1 s all at once](docs/images/all-runs-compare.jpg)
+[![Two runs of a collection side by side: 3 min 10 s one after another, 91.1 s all at once](docs/images/all-runs-compare.jpg)](https://montbaga.github.io/katalon-run-clock/sample/Reports/run-clock/index.html#compare)
 
 **On a phone**
 
