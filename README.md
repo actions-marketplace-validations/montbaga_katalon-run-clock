@@ -417,7 +417,7 @@ Use it if you would rather not commit Run Clock's files: it installs them
 into the checkout before Katalon runs, at the version you pin.
 
 ```yaml
-- uses: montbaga/katalon-run-clock@v1
+- uses: montbaga/katalon-run-clock@v1.0.0
   with:
     project-path: ${{ github.workspace }}
 ```
