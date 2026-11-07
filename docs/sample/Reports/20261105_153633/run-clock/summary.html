@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<title>Run Clock</title>
+<style>
+:root {
+  --night: #111214;
+  --night-2: #1b1c1f;
+  --night-3: #2a2b2f;
+  --stone: #e7e7e4;
+  --stone-2: #d6d5d1;
+  --ivory: #efeee9;
+  --ink: #121315;
+  --orange: #ff5b1f;
+  --orange-ink: #1a0b04;
+  --serif: "Sitka Banner", "Sitka Display", ui-serif, "Iowan Old Style", Georgia, serif;
+  --sans: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --m: 40px;
+  --ease: cubic-bezier(.16, 1, .3, 1);
+}
+* { box-sizing: border-box; }
+html { background: var(--night); scroll-behavior: smooth; scroll-padding-top: 72px; }
+body { margin: 0; color: var(--ivory); font: 18px/28px var(--sans); -webkit-font-smoothing: antialiased; }
+a { color: inherit; }
+button, input, select { font: inherit; }
+p { text-wrap: pretty; }
+h1, h2 { text-wrap: balance; }
+:focus-visible { outline: 2px solid var(--orange); outline-offset: 3px; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* fields: each section is one flat field with its own ink */
+.field { position: relative; padding: 144px var(--m); overflow-x: clip; }
+.night { background: var(--night); color: var(--ivory); --fg: var(--ivory); --dim: #a19f99; --good: #6fd6a2; --bad: #ff7a6b; --test: var(--ivory); --idle: #3a3b3f; --shut: #7a7973; --track: var(--night-3); --tone: var(--night-2); }
+.stone { background: var(--stone); color: var(--ink); --fg: var(--ink); --dim: #5c5b57; --good: #16633d; --bad: #b8261f; --test: var(--ink); --idle: #bdbcb7; --shut: #8a8984; --track: var(--stone-2); --tone: #deddda; }
+.wrap { max-width: 1360px; margin: 0 auto; }
+
+/* navigation: clear over the hero, frosted once the page moves under it */
+.nav { position: fixed; top: 0; left: 0; right: 0; z-index: 30; display: flex; align-items: center; gap: 36px; height: 64px; padding: 0 var(--m); color: var(--ivory); transition: background-color .5s var(--ease), backdrop-filter .5s var(--ease); }
+.nav.solid { background: rgba(17, 18, 20, .66); -webkit-backdrop-filter: blur(20px) saturate(1.4); backdrop-filter: blur(20px) saturate(1.4); }
+.wordmark { display: inline-flex; align-items: center; gap: 10px; font: 22px/1 var(--serif); text-decoration: none; white-space: nowrap; }
+.wordmark svg { width: 22px; height: 22px; }
+.nav-links { display: flex; gap: 28px; font-size: 14px; }
+.nav-links a, .textlink { position: relative; color: #b9b7b0; text-decoration: none; transition: color .3s; }
+.nav-links a::after, .textlink::after { content: ""; position: absolute; left: 0; right: 0; bottom: -4px; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: left; transition: transform .45s var(--ease); }
+.nav-links a:hover, .textlink:hover { color: var(--ivory); }
+.nav-links a:hover::after, .textlink:hover::after { transform: scaleX(1); }
+.stone .textlink { color: var(--dim); }
+.stone .textlink:hover { color: var(--ink); }
+.grow { flex: 1; }
+.nav-action { text-decoration: none; border: 0; padding: 0; background: none; color: var(--ivory); font-size: 14px; cursor: pointer; }
+
+.btn { display: inline-flex; align-items: center; gap: 10px; height: 52px; padding: 0 26px; border: 0; background: var(--orange); color: var(--orange-ink); font-size: 16px; font-weight: 600; text-decoration: none; cursor: pointer; transition: transform .25s var(--ease), background-color .25s; }
+.btn:hover { background: #ff7440; }
+.btn:active { transform: scale(.97); }
+.btn.quiet { background: var(--tone); color: var(--fg); font-weight: 500; }
+.btn.quiet:hover { background: var(--track); }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 28px; margin-top: 40px; }
+
+/* type: one display size, one heading size, text, small */
+h1 { margin: 0; font: 400 clamp(44px, 5vw, 76px)/1.02 var(--serif); letter-spacing: -0.02em; }
+h2 { margin: 0; font: 400 clamp(36px, 3.8vw, 58px)/1.04 var(--serif); letter-spacing: -0.02em; }
+.statement { max-width: 36ch; margin: 28px 0 0; font-size: 20px; line-height: 30px; }
+.meta { margin: 20px 0 0; color: var(--dim); font-size: 14px; line-height: 22px; }
+.change.good { color: var(--good); }
+.change.bad { color: var(--bad); }
+.change.same { color: var(--dim); }
+.notice { margin: 20px 0 0; padding: 12px 16px; background: #3a2a12; color: #f4c27a; font-size: 14px; line-height: 20px; }
+
+/* reveal: heading, then text, then the picture */
+.r { opacity: 0; transform: translateY(28px); transition: opacity 1s var(--ease) var(--d, 0ms), transform 1s var(--ease) var(--d, 0ms); }
+.in .r, .r.in { opacity: 1; transform: none; }
+
+/* hero */
+.hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: center; gap: 48px; min-height: 100vh; padding-top: 112px; padding-bottom: 80px; }
+.dial-box { display: grid; justify-items: center; gap: 22px; }
+.dial { width: min(100%, 640px); height: auto; overflow: visible; touch-action: none; cursor: grab; }
+.dial:active { cursor: grabbing; }
+.dial .tick { stroke: #6f6e69; }
+.dial .tick.major { stroke: var(--ivory); }
+.dial .ticklab { fill: #a19f99; font: 13px var(--sans); }
+.dial .lane-track { fill: none; stroke: var(--night-2); }
+.dial .arc { fill: none; transition: opacity .3s; }
+.dial.scrub .arc { opacity: .22; }
+.dial.scrub .arc.on { opacity: 1; }
+.dial .arc:hover { opacity: .8; }
+.dial .center-v { fill: var(--ivory); font: 400 104px var(--serif); letter-spacing: -0.03em; font-variant-numeric: lining-nums tabular-nums; }
+.dial .center-l { fill: #a19f99; font: 15px var(--sans); }
+.scrubber { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 18px; width: min(100%, 520px); color: #a19f99; font-size: 14px; }
+.scrubber input { width: 100%; height: 28px; margin: 0; background: transparent; -webkit-appearance: none; appearance: none; cursor: pointer; }
+.scrubber input::-webkit-slider-runnable-track { height: 4px; background: var(--night-3); }
+.scrubber input::-moz-range-track { height: 4px; background: var(--night-3); }
+.scrubber input::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; margin-top: -7px; border-radius: 50%; background: var(--orange); transition: transform .2s var(--ease); }
+.scrubber input::-moz-range-thumb { width: 18px; height: 18px; border: 0; border-radius: 50%; background: var(--orange); }
+.scrubber input:hover::-webkit-slider-thumb { transform: scale(1.25); }
+.readout { min-height: 22px; color: #c9c7c0; font-size: 14px; text-align: center; }
+
+/* figures, set like a specification sheet */
+.split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 48px 64px; align-items: start; }
+.specs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 56px 48px; margin: 0; }
+.spec dt { color: var(--dim); font-size: 14px; line-height: 20px; }
+.spec dd { margin: 10px 0 0; }
+.spec .big { display: block; font: 400 52px/1 var(--serif); letter-spacing: -0.02em; font-variant-numeric: lining-nums tabular-nums; }
+.spec .big .u { margin-left: 6px; color: var(--dim); font: 18px var(--sans); letter-spacing: 0; }
+.spec .note { display: block; margin-top: 10px; color: var(--dim); font-size: 14px; line-height: 21px; }
+
+/* the race between settings */
+.race-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px 48px; flex-wrap: wrap; }
+.race-clock { color: var(--dim); font-size: 14px; text-align: right; }
+.race-clock b { display: block; color: var(--fg); font: 400 56px/1 var(--serif); letter-spacing: -0.02em; font-variant-numeric: lining-nums tabular-nums; }
+.race { --name: 240px; --room: 220px; margin-top: 72px; }
+.lane { display: grid; grid-template-columns: var(--name) minmax(0, 1fr); align-items: center; gap: 24px; height: 76px; outline-offset: 6px; }
+.lane-name { font: 400 24px/1.15 var(--serif); font-variant-numeric: lining-nums; }
+.lane-track { position: relative; height: 100%; margin-right: var(--room); }
+.lane-bar { position: absolute; top: 50%; height: 6px; margin-top: -3px; width: 0; background: var(--shut); }
+.lane-bar.current { background: var(--fg); }
+.lane-bar.est { height: 0; margin-top: 0; border-top: 2px dashed var(--shut); background: none; }
+.lane:hover .lane-bar { filter: brightness(1.25); }
+.lane-fin { position: absolute; top: 50%; display: flex; align-items: baseline; gap: 12px; white-space: nowrap; opacity: 0; transform: translate(-8px, -50%); transition: opacity .5s var(--ease), transform .5s var(--ease); }
+.lane-fin.in { opacity: 1; transform: translate(0, -50%); }
+.lane-fin .v { font-size: 24px; font-variant-numeric: tabular-nums; }
+.lane-fin .n { color: var(--dim); font-size: 14px; }
+.lane-fin .best { color: var(--orange); font-size: 14px; font-weight: 600; }
+.race-axis { position: relative; height: 32px; margin: 8px var(--room) 0 calc(var(--name) + 24px); }
+.race-axis span { position: absolute; top: 8px; transform: translateX(-50%); color: var(--dim); font-size: 13px; white-space: nowrap; }
+.race-axis span:first-child { transform: none; }
+.foot { max-width: 60ch; margin: 40px 0 0; color: var(--dim); font-size: 14px; line-height: 22px; }
+
+/* where the time went */
+.pct { display: block; font: 400 clamp(140px, 17vw, 260px)/.82 var(--serif); letter-spacing: -0.04em; font-variant-numeric: lining-nums; }
+.pct-of { max-width: 18ch; margin: 28px 0 0; font: 400 32px/1.3 var(--serif); }
+.parts { display: grid; gap: 34px; padding-top: 12px; }
+.part-top { display: flex; align-items: baseline; gap: 16px; }
+.part-name { flex: 1; font-size: 18px; }
+.part-v { font: 400 34px/1 var(--serif); font-variant-numeric: lining-nums tabular-nums; }
+.part-v .u, .trend-cap .u { margin-left: 4px; color: var(--dim); font: 14px var(--sans); }
+.part-share { width: 48px; color: var(--dim); font-size: 14px; text-align: right; font-variant-numeric: tabular-nums; }
+.part-bar { height: 8px; margin-top: 14px; background: var(--track); }
+.part-bar i { display: block; height: 100%; width: 0; transition: width 1.4s var(--ease) var(--d, 0ms); }
+.in .part-bar i { width: var(--w); }
+
+.k-startup { background: var(--orange); }
+.k-test { background: var(--test); }
+.k-idle { background: var(--idle); }
+.k-shutdown { background: var(--shut); }
+.k-own { background: var(--idle); box-shadow: inset 0 0 0 1px var(--shut); }
+.k-prep { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='8'%3E%3Crect width='3' height='8' fill='%237a7973'/%3E%3C/svg%3E"); }
+
+/* timeline */
+.tl-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px 48px; flex-wrap: wrap; }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 24px; margin-top: 40px; color: var(--dim); font-size: 14px; }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.legend i { display: inline-block; width: 18px; height: 6px; }
+.legend i.fail { background: var(--test); box-shadow: inset -5px 0 0 var(--bad); }
+.tl { position: relative; margin-top: 48px; user-select: none; }
+.tl-axis { position: relative; height: 30px; }
+.tl-tick { position: absolute; bottom: 10px; transform: translateX(-50%); color: var(--dim); font-size: 13px; white-space: nowrap; }
+.tl-row { display: grid; align-items: center; height: 36px; }
+.tl-label { display: flex; align-items: baseline; gap: 10px; min-width: 0; padding-right: 20px; font-size: 14px; }
+.tl-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tl-pid { flex: none; color: var(--dim); font-size: 13px; font-variant-numeric: tabular-nums; }
+.tl-track { position: relative; height: 100%; }
+.seg { position: absolute; top: 14px; height: 8px; transition: opacity .25s; }
+.seg.fail::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 4px; background: var(--bad); }
+.tl.replaying .seg { opacity: .16; }
+.tl.replaying .seg.lit { opacity: 1; }
+.seg:hover { filter: brightness(1.2); }
+.tl-strip { height: 96px; margin-top: 18px; }
+.tl-strip .tl-label { align-self: start; flex-direction: column; gap: 2px; padding-top: 10px; }
+.tl-strip svg { position: absolute; inset: 0; overflow: visible; }
+.tl-group { padding: 18px 0 6px; font: 400 22px var(--serif); }
+.playhead { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--orange); pointer-events: none; opacity: 0; transition: opacity .3s; }
+.playhead.on { opacity: 1; }
+.playhead.flip b { left: auto; right: 8px; }
+.playhead b { position: absolute; top: -30px; left: 8px; right: auto; color: var(--orange); font-size: 13px; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+.tip { --test: var(--ivory); --idle: #3a3b3f; --shut: #7a7973; position: fixed; z-index: 50; max-width: 320px; padding: 12px 14px; background: var(--night-2); color: #c9c7c0; font: 13px/19px var(--sans); pointer-events: none; box-shadow: 0 18px 40px -12px rgba(0, 0, 0, .55); }
+.tip-value { margin-bottom: 4px; color: var(--ivory); font: 400 26px/1.1 var(--serif); font-variant-numeric: lining-nums; }
+.tip-row { display: flex; align-items: center; gap: 8px; }
+.tip-row i { flex: none; width: 14px; height: 5px; }
+
+/* tables */
+.tables { margin-top: 64px; }
+.table-title { margin: 56px 0 12px; font: 400 24px var(--serif); }
+.table-wrap { overflow-x: auto; }
+table.tbl { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 20px; }
+.tbl th { padding: 10px 14px; border-bottom: 1px solid color-mix(in srgb, currentColor 30%, transparent); color: var(--dim); font-weight: 400; text-align: left; white-space: nowrap; }
+.tbl td { padding: 13px 14px; border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent); vertical-align: middle; }
+.tbl th:first-child, .tbl td:first-child { padding-left: 0; }
+.tbl th:last-child, .tbl td:last-child { padding-right: 0; }
+.tbl.wide td:first-child { min-width: 220px; }
+.tbl .n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tbl tbody tr { transition: background-color .25s; }
+.tbl tbody tr:hover { background: color-mix(in srgb, currentColor 5%, transparent); }
+.tbl .bad { color: var(--bad); }
+.tbl .dim { color: var(--dim); font-size: 13px; }
+.tbl tr.picked { background: rgba(255, 91, 31, .1); }
+.tbl input[type="checkbox"] { width: 18px; height: 18px; margin: 0; accent-color: var(--orange); cursor: pointer; vertical-align: middle; }
+.tbl a.open { font-weight: 600; text-decoration: none; white-space: nowrap; }
+.tbl a.open:hover { color: #c43d0c; }
+.latest { margin-left: 8px; padding: 2px 8px; background: var(--fg); color: var(--tone); font-size: 12px; font-weight: 600; }
+pre.summary { margin: 0; padding: 24px 28px; background: var(--tone); color: var(--fg); font: 13px/1.65 ui-monospace, "Cascadia Mono", Consolas, monospace; overflow-x: auto; }
+.copy-row { display: flex; justify-content: flex-end; margin-top: 16px; }
+
+/* home */
+.rings .ring { fill: none; transition: opacity .3s; }
+.rings .ring.other { opacity: .38; }
+.rings a:hover .ring, .rings a:focus .ring { opacity: 1; }
+.rings a { outline: none; }
+.compare { display: grid; gap: 44px; }
+.cmp-head, .cmp-row { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: baseline; }
+.cmp-head { color: var(--dim); font-size: 14px; line-height: 20px; }
+.cmp-row .label { font-size: 18px; }
+.cmp-row .v { font: 400 40px/1 var(--serif); font-variant-numeric: lining-nums tabular-nums; }
+.cmp-row .v .u { margin-left: 5px; color: var(--dim); font: 16px var(--sans); }
+.cmp-row .change { font-size: 16px; }
+.cmp-bars { grid-column: 2 / 4; display: grid; gap: 6px; margin-top: -24px; }
+.cmp-bars i { display: block; height: 6px; width: 0; transition: width 1.3s var(--ease) var(--d, 0ms); }
+.in .cmp-bars i { width: var(--w); }
+.cmp-bars .old { background: var(--shut); }
+.cmp-bars .new { background: var(--orange); }
+.filter { display: inline-flex; align-items: center; gap: 14px; color: var(--dim); font-size: 14px; }
+.filter select { height: 44px; min-width: 240px; padding: 0 14px; border: 0; background: var(--tone); color: var(--fg); font-size: 16px; cursor: pointer; }
+.trend { position: relative; height: 380px; margin-top: 72px; }
+.trend-y { position: absolute; left: 0; top: 0; bottom: 36px; width: 60px; }
+.trend-y span { position: absolute; right: 14px; transform: translateY(50%); color: var(--dim); font-size: 13px; white-space: nowrap; }
+.trend-plot { position: absolute; left: 64px; right: 0; top: 0; bottom: 36px; }
+.trend-cols { position: absolute; inset: 0; display: flex; align-items: flex-end; gap: 2px; }
+.trend-col { position: relative; flex: 1 1 0; height: 100%; display: flex; align-items: flex-end; justify-content: center; text-decoration: none; }
+.trend-bar { width: min(56px, 60%); height: 0; background: var(--fg); opacity: .26; transition: height 1.3s var(--ease) var(--d, 0ms), opacity .3s; }
+.trend-bar.older { opacity: 1; }
+.trend-bar.newer { background: var(--orange); opacity: 1; }
+.trend-col:hover .trend-bar, .trend-col:focus-visible .trend-bar { opacity: .9; }
+.trend-cap { position: absolute; font: 400 24px/1 var(--serif); white-space: nowrap; font-variant-numeric: lining-nums; opacity: 0; transition: opacity .6s var(--ease) var(--d, 0ms); }
+.in .trend-cap { opacity: 1; }
+.trend-x { position: absolute; top: 100%; margin-top: 12px; color: var(--dim); font-size: 13px; white-space: nowrap; }
+.empty { margin-top: 48px; color: var(--dim); }
+
+/* tests */
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px 72px; margin-top: 64px; }
+.h3 { margin: 0; font: 400 28px/1.15 var(--serif); letter-spacing: -0.01em; }
+.rank { display: grid; gap: 20px; margin-top: 28px; }
+.rank-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px; align-items: baseline; }
+.rank-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16px; line-height: 22px; }
+.rank-name small { display: block; overflow: hidden; text-overflow: ellipsis; color: var(--dim); font-size: 13px; line-height: 19px; }
+.rank-v { font: 400 24px/1 var(--serif); font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
+.rank-bar { grid-column: 1 / -1; height: 4px; background: var(--track); }
+.rank-bar i { display: block; height: 100%; width: 0; background: var(--fg); transition: width 1.2s var(--ease) var(--d, 0ms); }
+.in .rank-bar i { width: var(--w); }
+.rank-row.bad .rank-bar i { background: var(--bad); }
+.split-box { margin-top: 88px; }
+details.plan { margin-top: 14px; }
+details.plan > summary { padding: 6px 0; font-size: 16px; cursor: pointer; }
+.plan-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px 36px; padding: 10px 0 18px; font-size: 15px; }
+.plan-cols ol { margin: 8px 0 0; padding-left: 20px; color: var(--dim); font-size: 14px; line-height: 22px; }
+.slower-line { color: var(--bad); }
+
+/* the colophon */
+.colophon { padding: 120px var(--m) 44px; background: #0b0c0d; color: var(--ivory); --dim: #a19f99; }
+.col-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 4fr) minmax(0, 3fr); gap: 56px 64px; align-items: start; }
+.col-mark { display: inline-flex; align-items: center; gap: 14px; font: 400 46px/1 var(--serif); letter-spacing: -0.02em; }
+.col-mark svg { width: 38px; height: 38px; }
+.col-brand p { max-width: 24ch; margin: 22px 0 0; color: #c9c7c0; font: 400 22px/1.35 var(--serif); }
+.col-h { margin: 6px 0 16px; color: var(--dim); font: 400 14px/20px var(--sans); }
+.col-notes p { max-width: 44ch; margin: 0 0 10px; color: #c9c7c0; font-size: 14px; line-height: 22px; }
+.maker { margin: 0; font: 400 30px/1.15 var(--serif); letter-spacing: -0.01em; }
+.maker-links { display: flex; align-items: center; gap: 18px; margin-top: 16px; font-size: 15px; }
+.maker-links .mail { position: relative; color: #c9c7c0; text-decoration: none; transition: color .3s; }
+.maker-links .mail::after { content: ""; position: absolute; left: 0; right: 0; bottom: -4px; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: left; transition: transform .45s var(--ease); }
+.maker-links .mail:hover { color: var(--ivory); }
+.maker-links .mail:hover::after { transform: scaleX(1); }
+.in-link { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 38px; height: 38px; border-radius: 50%; background: var(--night-3); color: var(--ivory); transition: background-color .3s, transform .35s var(--ease); }
+.in-link:hover { background: #0a66c2; transform: translateY(-2px); }
+.in-link svg { width: 16px; height: 16px; }
+.col-base { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 12px 32px; margin-top: 96px; color: var(--dim); font-size: 13px; line-height: 20px; }
+.col-base p { margin: 0; }
+.close-links { display: flex; gap: 28px; }
+
+@media (max-width: 1000px) {
+  .hero, .split { grid-template-columns: minmax(0, 1fr); }
+  .hero { min-height: 0; padding-top: 120px; }
+  .race { --name: 150px; --room: 150px; }
+  .lane-name { font-size: 20px; }
+}
+@media (max-width: 760px) {
+  :root { --m: 20px; }
+  body { font-size: 17px; line-height: 26px; }
+  .field { padding-top: 96px; padding-bottom: 96px; }
+  .nav { gap: 16px; }
+  .nav-links { display: none; }
+  .statement { font-size: 18px; line-height: 27px; }
+  .specs { gap: 40px 20px; }
+  .spec .big { font-size: 40px; }
+  .race { --name: 96px; --room: 84px; margin-top: 48px; }
+  .lane { gap: 12px; height: 64px; }
+  .lane-name { font-size: 17px; }
+  .lane-fin .n, .lane-fin .best { display: none; }
+  .lane-fin .v { font-size: 18px; }
+  .race-axis span:nth-child(even) { display: none; }
+  .race-clock { text-align: left; }
+  .pct-of { font-size: 26px; }
+  .tl-row:not(.tl-strip) .tl-pid { display: none; }
+  .cmp-head, .cmp-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); }
+  .cmp-head span:last-child, .cmp-row .change { grid-column: 1 / -1; }
+  .cmp-row .v { font-size: 30px; }
+  .cmp-bars { grid-column: 2 / 4; margin-top: -10px; }
+  .trend { height: 280px; }
+  .trend-cap { font-size: 16px; }
+  .cols { grid-template-columns: minmax(0, 1fr); }
+  .colophon { padding-top: 88px; }
+  .col-grid { grid-template-columns: minmax(0, 1fr); gap: 44px; }
+  .col-mark { font-size: 38px; }
+  .col-base { margin-top: 64px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .r { opacity: 1; transform: none; transition: none; }
+  .lane-fin, .part-bar i, .cmp-bars i, .trend-bar, .trend-cap, .nav-links a::after, .textlink::after { transition: none; }
+}
+@media print {
+  .nav, .actions, .scrubber, .copy-row { display: none; }
+  .r { opacity: 1; transform: none; }
+  .night { background: #fff; color: #000; }
+}
+</style>
+</head>
+<body>
+<nav class="nav" id="nav" aria-label="Report"></nav>
+<main id="app"></main>
+<div class="tip" id="tip" role="tooltip" hidden></div>
+<script type="application/json" id="run-clock-data">{"version":"1.0.0","generated":1794031831578,"session":"20261105_153633","start":1793885793245,"end":1793885892789,"final":true,"stats":{"elapsed":94669,"wall":99544,"before":2519,"processes":5,"withTests":3,"listenerOnly":2,"startup":16740,"shutdown":41,"tests":44164,"runs":3,"longest":21402,"peak":2,"own":4875},"procs":[{"pid":30376,"suite":"Test Suites/true_practice_1/API Test Suite","suiteName":"API Test Suite","group":"e6cdd972-8279-4deb-ad98-0ea03dc6e77f","label":"before-suite listeners","jvmStart":1793885795764,"first":1793885808393,"last":1793885808393,"exit":1793885808442,"own":0,"runs":[]},{"pid":34712,"suite":"Test Suites/true_practice_1/API Test Suite","suiteName":"API Test Suite","group":"e6cdd972-8279-4deb-ad98-0ea03dc6e77f","label":"TC_BearerToken_Flow","jvmStart":1793885809226,"first":1793885825986,"last":1793885830274,"exit":1793885830310,"own":0,"runs":[{"id":"Test Cases/true_practice_1/TC_BearerToken_Flow","name":"TC_BearerToken_Flow","status":"PASSED","start":1793885825986,"end":1793885830274}]},{"pid":3524,"suite":"Test Suites/true_practice_1/API Test Suite","suiteName":"API Test Suite","group":"e6cdd972-8279-4deb-ad98-0ea03dc6e77f","label":"BookAppointment","jvmStart":1793885809296,"first":1793885826036,"last":1793885847438,"exit":1793885847479,"own":0,"runs":[{"id":"Test Cases/true_practice_1/BookAppointment","name":"BookAppointment","status":"PASSED","start":1793885826036,"end":1793885847438}]},{"pid":9084,"suite":"Test Suites/true_practice_1/API Test Suite","suiteName":"API Test Suite","group":"e6cdd972-8279-4deb-ad98-0ea03dc6e77f","label":"after-suite listeners","jvmStart":1793885848678,"first":1793885860412,"last":1793885862844,"exit":1793885862927,"own":2432,"runs":[]},{"pid":42696,"suite":"Test Suites/true_practice_1/New Test Suite (1)","suiteName":"New Test Suite (1)","group":"7597f8ee-a7fd-4dca-bbb0-d92f70472a25","label":"BookAppointment","jvmStart":1793885864007,"first":1793885870610,"last":1793885891874,"exit":1793885892789,"own":2443,"runs":[{"id":"Test Cases/true_practice_1/BookAppointment","name":"BookAppointment","status":"PASSED","start":1793885870924,"end":1793885889398}]}],"kind":"collection","title":"New Test Suite Collection","entity":"Test Suites/true_practice_1/New Test Suite Collection","suites":[{"id":"Test Suites/true_practice_1/API Test Suite","key":"e6cdd972-8279-4deb-ad98-0ea03dc6e77f","name":"API Test Suite","start":1793885795764,"end":1793885862927,"elapsed":64731,"processes":4,"tests":2},{"id":"Test Suites/true_practice_1/New Test Suite (1)","key":"7597f8ee-a7fd-4dca-bbb0-d92f70472a25","name":"New Test Suite (1)","start":1793885864007,"end":1793885892789,"elapsed":26339,"processes":1,"tests":1}],"plan":{"together":false,"mode":"SEQUENTIAL","max":null,"key":"sequential","setting":"Sequential, 2 suites","options":[{"key":"sequential","label":"One suite after another","millis":94669,"measured":true,"runs":1,"current":true},{"key":"parallel:2","label":"All 2 at once","millis":67250,"measured":false,"runs":0,"current":false}],"advice":"Running both suites at once may be faster: about 67.3 s instead of 94.7 s. Set Execution mode to Parallel with Max concurrent instances 2 in the collection, then run it once to measure.","note":"The at-once estimates assume suites do not slow each other down. On one machine they usually do, so treat them as best cases."},"tests":[{"id":"Test Cases/true_practice_1/BookAppointment","name":"BookAppointment","suite":"API Test Suite","ms":21402,"status":"PASSED"},{"id":"Test Cases/true_practice_1/BookAppointment","name":"BookAppointment","suite":"New Test Suite (1)","ms":18474,"status":"PASSED"},{"id":"Test Cases/true_practice_1/TC_BearerToken_Flow","name":"TC_BearerToken_Flow","suite":"API Test Suite","ms":4288,"status":"PASSED"}],"summary":"Run Clock | New Test Suite Collection | 20261105_153633\n\nElapsed                     94.7 s   run start to last process exit, without Run Clock itself\nBefore first process         2.5 s   Katalon preparing the run\n\nSuite                               Starts        Ends     Elapsed  Processes  Tests\nAPI Test Suite                       2.5 s      67.3 s      64.7 s          4      2\nNew Test Suite (1)                  70.8 s      97.1 s      26.3 s          1      1\n\nCollection setting                Time\nOne suite after another         94.7 s   this run\nAll 2 at once                  ~67.3 s   estimate\n\nRunning both suites at once may be faster: about 67.3 s instead of 94.7 s. Set Execution mode to Parallel with Max concurrent instances 2 in the collection, then run it once to measure.","complete":true,"page":"run","history":"on","slowerBy":25,"home":"../../run-clock/index.html","trend":[{"session":"20261105_153633","at":1793885892789,"setting":"Sequential, 2 suites","elapsed":94669,"runs":3,"failed":0,"current":true,"href":"summary.html"}]}</script>
+<script>
+(() => {
+  'use strict';
+
+  const D = JSON.parse(document.getElementById('run-clock-data').textContent);
+  const app = document.getElementById('app');
+  const nav = document.getElementById('nav');
+  const tip = document.getElementById('tip');
+  const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const SVGNS = 'http://www.w3.org/2000/svg';
+
+  const el = (tag, cls, text) => {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined && text !== null) n.textContent = text;
+    return n;
+  };
+  const add = (parent, ...kids) => {
+    kids.forEach(k => { if (k !== null && k !== undefined && k !== false) parent.appendChild(typeof k === 'string' ? document.createTextNode(k) : k); });
+    return parent;
+  };
+  const svg = (tag, attrs) => {
+    const n = document.createElementNS(SVGNS, tag);
+    Object.entries(attrs || {}).forEach(([k, v]) => n.setAttribute(k, v));
+    return n;
+  };
+  // no href: the report is not on this machine, so the same element without a link
+  const link = (cls, text, href) => { if (!href) return el('span', cls, text); const a = el('a', cls, text); a.href = safeHref(href); return a; };
+
+  const fmt = ms => {
+    if (ms === null || ms === undefined || isNaN(ms)) return '-';
+    const neg = ms < 0;
+    ms = Math.abs(ms);
+    const out = ms < 120000 ? (ms / 1000).toFixed(1) + ' s'
+      : Math.floor(ms / 60000) + ' min ' + String(Math.floor(ms % 60000 / 1000)).padStart(2, '0') + ' s';
+    return (neg ? '-' : '') + out;
+  };
+  // a figure as number and unit, for large serif settings
+  const figure = (ms, cls) => {
+    const s = el('span', cls);
+    if (ms === null || ms === undefined || isNaN(ms)) { s.textContent = '-'; return s; }
+    if (ms < 120000) add(s, (ms / 1000).toFixed(1), el('span', 'u', 's'));
+    else add(s, Math.floor(ms / 60000) + ':' + String(Math.floor(ms % 60000 / 1000)).padStart(2, '0'), el('span', 'u', 'min'));
+    return s;
+  };
+  const pct = (a, b) => b > 0 ? Math.round(a / b * 100) : 0;
+  const NICE = [0.5, 1, 2, 5, 10, 15, 20, 30, 60, 120, 300, 600, 900, 1200, 1800, 3600, 7200];
+  const niceStep = (spanMs, maxTicks) => (NICE.find(n => spanMs / 1000 / n <= maxTicks) || 7200) * 1000;
+  const tickLabel = (ms, scaleMs) => {
+    const s = Math.round(ms / 100) / 10;
+    if (scaleMs <= 180000) return (Number.isInteger(s) ? s : s.toFixed(1)) + ' s';
+    return s % 60 === 0 ? (s / 60) + ' min' : Math.floor(s / 60) + ' min ' + Math.round(s % 60) + ' s';
+  };
+  const when = t => new Date(t).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+  const whenShort = t => new Date(t).toLocaleString([], { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+  const timeOnly = t => new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const ago = t => {
+    const s = Math.max(0, (Date.now() - t) / 1000);
+    if (s < 60) return 'just now';
+    if (s < 3600) return Math.floor(s / 60) + ' min ago';
+    if (s < 86400) return Math.floor(s / 3600) + ' h ago';
+    const d = Math.floor(s / 86400);
+    return d === 1 ? 'yesterday' : d + ' days ago';
+  };
+  // anchors stay as they are; file paths are encoded segment by segment
+  const safeHref = h => {
+    const s = String(h || '');
+    return /^#[\w-]*$/.test(s) || /^file:\/\//i.test(s) ? s : s.split('/').map(encodeURIComponent).join('/');
+  };
+  const failedRun = st => /^(FAILED|ERROR|INCOMPLETE)$/i.test(String(st || ''));
+  const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
+  const changeOf = (before, after) => {
+    if (before === null || before === undefined || after === null || after === undefined) return null;
+    const d = after - before;
+    if (Math.abs(d) < 50) return el('span', 'change same', 'no change');
+    return el('span', 'change ' + (d < 0 ? 'good' : 'bad'), fmt(Math.abs(d)) + (d < 0 ? ' faster' : ' slower'));
+  };
+
+  // motion helpers
+  const easeOut = p => 1 - Math.pow(1 - p, 3);
+  const easeInOut = p => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+  const tween = (ms, frame, ease, token) => new Promise(done => {
+    if (REDUCE || ms <= 0) { frame(1); done(); return; }
+    const t0 = performance.now();
+    const step = now => {
+      if (token && token.stop) return done();
+      const p = Math.min(1, (now - t0) / ms);
+      frame(ease ? ease(p) : p);
+      if (p < 1) requestAnimationFrame(step); else done();
+    };
+    requestAnimationFrame(step);
+  });
+  const io = 'IntersectionObserver' in window ? new IntersectionObserver(entries => entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    io.unobserve(e.target);
+    e.target.classList.add('in');
+    (e.target._enter || []).forEach(f => f());
+  }), { threshold: 0, rootMargin: '0px 0px -12% 0px' }) : null;
+  // long tables show their first rows and offer the rest
+  const ROWS = 20;
+  const moreRows = (total, showRest) => {
+    if (total <= ROWS) return null;
+    const row = el('div', 'copy-row');
+    const b = el('button', 'btn quiet', 'Show all ' + total + ' rows');
+    b.type = 'button';
+    b.addEventListener('click', () => { showRest(); row.remove(); });
+    row.appendChild(b);
+    return row;
+  };
+  const onEnter = (node, fn) => {
+    if (fn) (node._enter = node._enter || []).push(fn);
+    if (io && !REDUCE) io.observe(node);
+    else { node.classList.add('in'); if (fn) fn(); }
+  };
+  const reveal = (nodes, base) => nodes.forEach((n, i) => { if (!n) return; n.classList.add('r'); n.style.setProperty('--d', ((base || 0) + i * 90) + 'ms'); });
+
+  const showTip = (x, y, value, rows) => {
+    tip.replaceChildren(el('div', 'tip-value', value));
+    rows.forEach(([text, key]) => {
+      const row = el('div', 'tip-row');
+      if (key) { const i = el('i', 'k-' + key); row.appendChild(i); }
+      row.appendChild(el('span', null, text));
+      tip.appendChild(row);
+    });
+    tip.hidden = false;
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    let left = x + 16, top = y + 16;
+    if (left + w > innerWidth - 8) left = x - w - 16;
+    if (top + h > innerHeight - 8) top = y - h - 16;
+    tip.style.left = Math.max(8, left) + 'px';
+    tip.style.top = Math.max(8, top) + 'px';
+  };
+  const hideTip = () => { tip.hidden = true; };
+
+  const copyText = async (text, button) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (e) {
+      const ta = el('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+    const old = button.textContent;
+    button.textContent = 'Copied';
+    setTimeout(() => { button.textContent = old; }, 1400);
+  };
+
+  const MARK = '<svg viewBox="0 0 24 24" fill="none" stroke-linecap="round"><circle cx="12" cy="13" r="8.5" stroke="currentColor" stroke-width="1.6"/><path d="M12 13l4.2-4.2" stroke="#ff5b1f" stroke-width="2"/><path d="M10 2.5h4" stroke="currentColor" stroke-width="1.6"/></svg>';
+  const buildNav = (links, action) => {
+    const mark = el('a', 'wordmark');
+    mark.href = '#top';
+    mark.innerHTML = MARK;
+    mark.appendChild(document.createTextNode('Run Clock'));
+    const list = el('div', 'nav-links');
+    links.filter(Boolean).forEach(([text, href]) => list.appendChild(link(null, text, href)));
+    add(nav, mark, list, el('div', 'grow'), action);
+    const solid = () => nav.classList.toggle('solid', scrollY > 24);
+    addEventListener('scroll', solid, { passive: true });
+    solid();
+  };
+  const field = (tone, id, cls) => {
+    const s = el('section', 'field ' + tone + (cls ? ' ' + cls : ''));
+    if (id) s.id = id;
+    const w = el('div', 'wrap');
+    s.appendChild(w);
+    s.w = w;
+    app.appendChild(s);
+    return s;
+  };
+  const DEV = { name: 'Monty Bagati', email: 'bagati.monty@gmail.com', linkedin: 'https://www.linkedin.com/in/monty-bagati-90454626/' };
+  const IN_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg>';
+  const closeSection = (notes, links) => {
+    const s = el('footer', 'colophon');
+    const w = el('div', 'wrap');
+    const grid = el('div', 'col-grid');
+    const brand = el('div', 'col-brand');
+    const mark = el('div', 'col-mark');
+    mark.innerHTML = MARK;
+    mark.appendChild(document.createTextNode('Run Clock'));
+    add(brand, mark, el('p', null, 'Real time for every Katalon run.'));
+    const about = el('div', 'col-notes');
+    add(about, el('h2', 'col-h', D.page === 'home' ? 'This page' : 'This report'), ...notes.map(n => el('p', null, n)));
+    const maker = el('div', 'col-maker');
+    const mail = el('a', 'mail', DEV.email);
+    mail.href = 'mailto:' + DEV.email;
+    const inLink = el('a', 'in-link');
+    inLink.href = DEV.linkedin;
+    inLink.target = '_blank';
+    inLink.rel = 'noopener noreferrer';
+    inLink.title = DEV.name + ' on LinkedIn';
+    inLink.setAttribute('aria-label', DEV.name + ' on LinkedIn');
+    inLink.innerHTML = IN_ICON;
+    add(maker, el('h2', 'col-h', 'Developed by'), el('p', 'maker', DEV.name), add(el('div', 'maker-links'), mail, inLink));
+    add(grid, brand, about, maker);
+    const base = el('div', 'col-base');
+    const ls = el('div', 'close-links');
+    links.filter(Boolean).forEach(([t, h]) => ls.appendChild(link('textlink', t, h)));
+    add(base, el('p', null, '© ' + new Date(D.generated || Date.now()).getFullYear() + ' ' + DEV.name + '. Run Clock ' + D.version + '.'), ls);
+    add(w, grid, base);
+    s.appendChild(w);
+    document.body.insertBefore(s, tip);
+    reveal([brand, about, maker]);
+    reveal([base], 300);
+    onEnter(s);
+  };
+
+  // dial geometry shared by both pages
+  const dialFrame = (labelFor, span, gapFrac) => {
+    const C = 300;
+    const g = gapFrac;
+    const ang = f => -Math.PI / 2 + Math.PI * g + Math.max(0, Math.min(1, f)) * Math.PI * 2 * (1 - g);
+    const pt = (r, a) => [C + r * Math.cos(a), C + r * Math.sin(a)];
+    const arc = (r, a0, a1) => {
+      if (a1 - a0 < 0.002) a1 = a0 + 0.002;
+      const [x0, y0] = pt(r, a0), [x1, y1] = pt(r, a1);
+      return 'M' + x0.toFixed(2) + ' ' + y0.toFixed(2) + ' A' + r + ' ' + r + ' 0 ' + (a1 - a0 > Math.PI ? 1 : 0) + ' 1 ' + x1.toFixed(2) + ' ' + y1.toFixed(2);
+    };
+    const sector = a => {
+      const a0 = ang(0) - 0.01;
+      if (a >= ang(1)) return 'M-40 -40 H640 V640 H-40 Z';
+      const [x0, y0] = pt(340, a0), [x1, y1] = pt(340, a);
+      return 'M300 300 L' + x0.toFixed(1) + ' ' + y0.toFixed(1) + ' A340 340 0 ' + (a - a0 > Math.PI ? 1 : 0) + ' 1 ' + x1.toFixed(1) + ' ' + y1.toFixed(1) + ' Z';
+    };
+    const s = svg('svg', { viewBox: '-40 -40 680 680', class: 'dial' });
+    const id = 'sweep' + Math.random().toString(36).slice(2, 8);
+    const defs = svg('defs');
+    const mask = svg('mask', { id, maskUnits: 'userSpaceOnUse', x: -40, y: -40, width: 680, height: 680 });
+    const wedge = svg('path', { d: sector(ang(0)), fill: '#fff' });
+    mask.appendChild(wedge);
+    defs.appendChild(mask);
+    s.appendChild(defs);
+    // the chapter ring: minor and major ticks across the run
+    const ticks = svg('g');
+    const step = niceStep(span, 10);
+    const minor = span / (step / 5) <= 150 ? step / 5 : step / 2;
+    for (let v = 0; v <= span + 1; v += minor) {
+      const major = Math.abs(v / step - Math.round(v / step)) < 1e-6;
+      const a = ang(v / span);
+      const [x0, y0] = pt(major ? 270 : 278, a), [x1, y1] = pt(288, a);
+      ticks.appendChild(svg('line', { x1: x0, y1: y0, x2: x1, y2: y1, class: 'tick' + (major ? ' major' : ''), 'stroke-width': major ? 2 : 1 }));
+      if (major) {
+        const [lx, ly] = pt(312, a);
+        const t = svg('text', { x: lx, y: ly + 4, 'text-anchor': 'middle', class: 'ticklab' });
+        t.textContent = labelFor(v);
+        ticks.appendChild(t);
+      }
+    }
+    const [ex0, ey0] = pt(266, ang(1)), [ex1, ey1] = pt(290, ang(1));
+    ticks.appendChild(svg('line', { x1: ex0, y1: ey0, x2: ex1, y2: ey1, stroke: '#ff5b1f', 'stroke-width': 3 }));
+    s.appendChild(ticks);
+    const lanes = svg('g', { mask: 'url(#' + id + ')' });
+    s.appendChild(lanes);
+    const hand = svg('g');
+    hand.appendChild(svg('line', { x1: 300, y1: 160, x2: 300, y2: 10, stroke: '#ff5b1f', 'stroke-width': 2.5, 'stroke-linecap': 'round' }));
+    hand.appendChild(svg('circle', { cx: 300, cy: 160, r: 4.5, fill: '#ff5b1f' }));
+    const v = svg('text', { x: 300, y: 318, 'text-anchor': 'middle', class: 'center-v' });
+    const l = svg('text', { x: 300, y: 366, 'text-anchor': 'middle', class: 'center-l' });
+    s.appendChild(v);
+    s.appendChild(l);
+    s.appendChild(hand);
+    // hand at f; the mask opens to m (defaults to the hand, false for fully open)
+    const point = (f, m) => {
+      const a = ang(f);
+      hand.setAttribute('transform', 'rotate(' + ((a + Math.PI / 2) * 180 / Math.PI).toFixed(2) + ' 300 300)');
+      wedge.setAttribute('d', sector(m === false ? ang(1) : ang(m === undefined ? f : m)));
+    };
+    const fracAt = (cx, cy) => {
+      const b = s.getBoundingClientRect();
+      const x = (cx - b.left) / b.width * 680 - 40 - 300, y = (cy - b.top) / b.height * 680 - 40 - 300;
+      let a = Math.atan2(y, x);
+      const a0 = -Math.PI / 2 + Math.PI * g;
+      while (a < a0) a += Math.PI * 2;
+      return Math.max(0, Math.min(1, (a - a0) / (Math.PI * 2 * (1 - g))));
+    };
+    return { s, lanes, arc, ang, point, v, l, fracAt };
+  };
+  const centerValue = ms => (ms < 120000 ? (ms / 1000).toFixed(1) : Math.floor(ms / 60000) + ':' + String(Math.floor(ms % 60000 / 1000)).padStart(2, '0'));
+  const centerUnit = ms => (ms < 120000 ? 'seconds' : 'minutes');
+
+  // run page
+  const runPage = () => {
+    const T0 = D.start;
+    const SPAN = Math.max(1, D.end - D.start);
+    const S = D.stats || {};
+    const OWN = (D.procs || []).some(p => p.own > 0);
+    const PHASES = [
+      { key: 'startup', name: 'Start-up', hint: 'process start to first listener call' },
+      { key: 'test', name: 'Running tests', hint: 'inside test cases' },
+      { key: 'idle', name: 'Listeners and idle', hint: 'listener hooks and waiting between steps' },
+      { key: 'shutdown', name: 'Shutdown', hint: 'last listener call to process exit' },
+      OWN ? { key: 'own', name: 'Run Clock itself', hint: 'writing this report, inside the after-suite process' } : null
+    ].filter(Boolean);
+    const PHASE_NAME = { startup: 'Start-up', test: 'Running test', idle: 'Listeners and idle', shutdown: 'Shutdown', prep: 'Katalon preparing the run', own: 'Run Clock writing this report' };
+    const procs = (D.procs || []).map(p => {
+      const end = p.exit != null ? p.exit : (p.last != null ? p.last : p.jvmStart);
+      const segs = [];
+      const push = (phase, s, e, run) => { if (e > s) segs.push({ phase, s, e, run }); };
+      if (p.first != null) {
+        push('startup', p.jvmStart, p.first);
+        let cursor = p.first;
+        p.runs.forEach(r => { push('idle', cursor, r.start); push('test', r.start, r.end, r); cursor = Math.max(cursor, r.end); });
+        const ownStart = p.own > 0 ? Math.max(cursor, p.last - p.own) : p.last;
+        push('idle', cursor, ownStart);
+        if (p.own > 0) push('own', ownStart, p.last);
+        if (p.exit != null) push('shutdown', Math.max(p.last, cursor), p.exit);
+      } else {
+        push('idle', p.jvmStart, end);
+      }
+      return Object.assign({}, p, { end, segs });
+    });
+    const firstJvm = procs.length ? Math.min(...procs.map(p => p.jvmStart)) : T0;
+    const allRuns = procs.reduce((a, p) => a.concat(p.runs), []);
+    const failed = allRuns.filter(r => failedRun(r.status)).length;
+    const passed = allRuns.filter(r => /^PASSED$/i.test(String(r.status || ''))).length;
+    const isSuite = D.kind === 'suite';
+    const hasOptions = isSuite && D.options && D.options.length > 0;
+    const rows = [];
+    if (firstJvm - T0 > 20) rows.push({ label: 'Katalon preparing', segs: [{ phase: 'prep', s: T0, e: firstJvm }] });
+    procs.forEach(p => rows.push({ label: p.label, pid: p.pid, segs: p.segs, proc: p }));
+    const colourOf = sg => ({ startup: 'var(--orange)', test: 'var(--test)', idle: 'var(--idle)', shutdown: 'var(--shut)', prep: 'var(--shut)', own: 'var(--shut)' })[sg.phase];
+    const noteOf = o => (!o.measured ? 'estimate' : (o.runs > 1 ? 'median of ' + o.runs + ' runs' + (o.current ? ', this setting' : '') : (o.current ? 'this run' : 'measured once')));
+    const segLines = (sg, r) => {
+      const lines = [];
+      if (sg.phase === 'test') lines.push([sg.run.name, 'test'], ['Test ' + String(sg.run.status || 'unknown').toLowerCase()]);
+      else lines.push([PHASE_NAME[sg.phase], sg.phase]);
+      if (r.proc && !(sg.phase === 'test' && r.proc.runs.length === 1)) lines.push([r.proc.label]);
+      if (r.proc) lines.push(['Process ' + r.proc.pid]);
+      lines.push(['From +' + fmt(sg.s - T0) + ' to +' + fmt(sg.e - T0)]);
+      return lines;
+    };
+    const runningAt = t => {
+      const live = procs.filter(p => p.jvmStart <= t && t < p.end);
+      const phase = k => live.filter(p => p.segs.some(sg => sg.phase === k && sg.s <= t && t < sg.e)).length;
+      return { n: live.length, startup: phase('startup'), test: phase('test') };
+    };
+
+    document.title = D.title + ' | Run Clock';
+    const copyBtn = el('button', 'nav-action', 'Copy summary');
+    copyBtn.type = 'button';
+    copyBtn.addEventListener('click', () => copyText(D.summary, copyBtn));
+    buildNav([['Figures', '#figures'], hasOptions ? ['Settings', '#settings'] : (!isSuite ? ['Suites', '#settings'] : null), D.trend && D.trend.length > 1 ? ['Over time', '#over-time'] : null,
+      D.tests && D.tests.length ? ['Tests', '#tests'] : null, ['Timeline', '#timeline'], ['Numbers', '#numbers'],
+      D.home ? ['All runs', D.home] : null], copyBtn);
+
+    let dark = true;
+    const tone = () => { dark = !dark; return dark ? 'night' : 'stone'; };
+
+    // hero: the run as a chronograph
+    const hero = field('night', 'top', 'hero-field');
+    hero.w.classList.add('hero');
+    const text = el('div');
+    const h1 = el('h1', null, D.title);
+    const a = D.advice;
+    const fastest = hasOptions ? D.options.find(o => o.fastest) : null;
+    let statement;
+    if (hasOptions && a && !a.currentFastest && fastest) statement = 'This run took ' + fmt(S.elapsed) + ' of real time. With ' + a.fastest.toLowerCase().replace('parallel', 'parallel execution') + ', the same suite took ' + (fastest.runs > 1 ? 'a median of ' + fmt(fastest.millis) + ' over ' + fastest.runs + ' runs.' : fmt(fastest.millis) + '.');
+    else if (hasOptions && a && D.options.filter(o => o.measured).length > 1) statement = 'This run took ' + fmt(S.elapsed) + ' of real time, the fastest of every setting measured for this suite.';
+    else if (!isSuite && D.suites) statement = plural(D.suites.length, 'suite', 'suites') + ' ran in ' + fmt(S.elapsed) + ' of real time.';
+    else statement = 'This run took ' + fmt(S.elapsed) + ' of real time.';
+    const st = el('p', 'statement', statement);
+    const modeText = isSuite && D.mode
+      ? (D.mode.parallel ? 'Parallel, max ' + D.mode.max + ', ' + D.mode.peak + ' at once at peak' : 'Parallel off')
+      : 'Collection of ' + plural((D.suites || []).length, 'suite', 'suites');
+    const meta = el('p', 'meta', modeText + '. Started ' + when(D.start) + '. ' + (D.entity ? D.entity + ', ' : '') + 'session ' + D.session + '.');
+    let prevLine = null;
+    if (D.previous) {
+      prevLine = el('p', 'meta');
+      const ch = changeOf(D.previous.elapsed, S.elapsed);
+      add(prevLine, ch, ch.classList.contains('same') ? ' against the previous run of this suite.' : ' than the previous run of this suite (' + fmt(D.previous.elapsed) + ').');
+    }
+    const slowLine = D.slower ? el('p', 'meta slower-line', D.slower.percent + '% slower than usual for ' + D.slower.setting + ': the median of its last ' +
+      D.slower.runs + ' runs is ' + fmt(D.slower.median) + '.') : null;
+    const actions = el('div', 'actions');
+    const replay = el('button', 'btn', 'Replay the run');
+    replay.type = 'button';
+    add(actions, replay, hasOptions && a && !a.currentFastest ? link('textlink', 'See the settings', '#settings') : link('textlink', 'See every process', '#timeline'));
+    add(text, h1, st, meta, prevLine, slowLine, !D.final ? el('div', 'notice', 'Written before the last process exited. Reopen this page after the run finishes for the complete numbers.') : null, actions);
+
+    const box = el('div', 'dial-box');
+    const dial = dialFrame(v => tickLabel(v, SPAN), SPAN, 0.025);
+    dial.s.setAttribute('role', 'img');
+    dial.s.setAttribute('aria-label', 'Chronograph of the run: ' + plural(procs.length, 'process', 'processes') + ' over ' + fmt(S.elapsed) + ' of real time');
+    const n = rows.length;
+    const pitch = n ? Math.min(22, 104 / n) : 0;
+    const th = Math.max(1.6, Math.min(10, pitch - 3));
+    const arcs = [];
+    const AGG = n > 40;
+    const idleText = AGG ? plural(procs.length, 'process', 'processes') + ': the rings show how many were starting up, running tests and alive at each moment.' : '';
+    if (AGG) {
+      const B = 180;
+      const counts = [];
+      for (let i = 0; i < B; i++) counts.push(runningAt(T0 + (i + 0.5) / B * SPAN));
+      const top = Math.max(1, ...counts.map(c => c.n));
+      [['startup', 'var(--orange)', 'Starting up', 'startup'], ['test', 'var(--test)', 'Running tests', 'test'], ['n', 'var(--shut)', 'Processes alive', 'shutdown']].forEach(([k, colour, name, key], j) => {
+        const rad = 236 - j * 34;
+        dial.lanes.appendChild(svg('circle', { cx: 300, cy: 300, r: rad, class: 'lane-track', 'stroke-width': 26 }));
+        counts.forEach((c, i) => {
+          if (!c[k]) return;
+          const s0 = T0 + i / B * SPAN, s1 = T0 + (i + 1) / B * SPAN;
+          const p = svg('path', { d: dial.arc(rad, dial.ang(i / B), dial.ang((i + 1) / B) + 0.003), class: 'arc', stroke: colour, 'stroke-width': 26, 'stroke-opacity': (0.15 + 0.85 * c[k] / top).toFixed(2) });
+          p.addEventListener('pointermove', e => showTip(e.clientX, e.clientY, String(c[k]), [[name, key], ['From +' + fmt(s0 - T0) + ' to +' + fmt(s1 - T0)]]));
+          p.addEventListener('pointerleave', hideTip);
+          dial.lanes.appendChild(p);
+          arcs.push({ p, sg: { s: s0, e: s1 } });
+        });
+      });
+    }
+    (AGG ? [] : rows).forEach((r, i) => {
+      const rad = 252 - pitch * i - pitch / 2;
+      dial.lanes.appendChild(svg('circle', { cx: 300, cy: 300, r: rad, class: 'lane-track', 'stroke-width': th }));
+      r.segs.forEach(sg => {
+        const p = svg('path', { d: dial.arc(rad, dial.ang((sg.s - T0) / SPAN), dial.ang((sg.e - T0) / SPAN)), class: 'arc', stroke: colourOf(sg), 'stroke-width': th });
+        if (sg.phase === 'prep' || sg.phase === 'own') p.setAttribute('stroke-dasharray', '2 3');
+        p.addEventListener('pointermove', e => showTip(e.clientX, e.clientY, fmt(sg.e - sg.s), segLines(sg, r)));
+        p.addEventListener('pointerleave', hideTip);
+        dial.lanes.appendChild(p);
+        arcs.push({ p, sg });
+        if (sg.phase === 'test' && failedRun(sg.run.status)) {
+          const e1 = dial.ang((sg.e - T0) / SPAN);
+          const cap = svg('path', { d: dial.arc(rad, e1 - Math.min(0.03, (e1 - dial.ang((sg.s - T0) / SPAN)) / 3), e1), class: 'arc', stroke: 'var(--bad)', 'stroke-width': th });
+          dial.lanes.appendChild(cap);
+          arcs.push({ p: cap, sg });
+        }
+      });
+    });
+    const scrub = el('label', 'scrubber');
+    const range = el('input');
+    range.type = 'range';
+    range.min = 0;
+    range.max = SPAN;
+    range.step = Math.max(1, Math.round(SPAN / 1000));
+    range.value = SPAN;
+    add(scrub, 'Scrub through the run', range);
+    const readout = el('div', 'readout', idleText);
+    readout.setAttribute('aria-live', 'polite');
+    add(box, dial.s, scrub, readout);
+    add(hero.w, text, box);
+    reveal([h1, st, meta, prevLine, slowLine, actions]);
+    reveal([box], 200);
+    onEnter(hero);
+
+    const rest = () => {
+      dial.s.classList.remove('scrub');
+      dial.v.textContent = centerValue(S.elapsed);
+      dial.l.textContent = centerUnit(S.elapsed) + ' of real time';
+      readout.textContent = idleText;
+    };
+    let token = null;
+    const sweep = () => {
+      if (token) token.stop = true;
+      token = {};
+      dial.s.classList.remove('scrub');
+      readout.textContent = idleText;
+      range.value = SPAN;
+      dial.l.textContent = centerUnit(S.elapsed) + ' of real time';
+      return tween(2600, p => { dial.point(p); dial.v.textContent = centerValue(p * SPAN); }, easeInOut, token).then(() => { if (!token.stop) rest(); });
+    };
+    const scrubTo = f => {
+      if (token) token.stop = true;
+      const t = T0 + f * SPAN;
+      dial.point(f, false);
+      dial.s.classList.add('scrub');
+      arcs.forEach(({ p, sg }) => p.classList.toggle('on', sg.s <= t && t < sg.e));
+      dial.v.textContent = centerValue(f * SPAN);
+      dial.l.textContent = centerUnit(f * SPAN) + ' into the run';
+      const live = runningAt(t);
+      readout.textContent = live.n ? plural(live.n, 'process', 'processes') + ' running: ' + live.startup + ' starting up, ' + live.test + ' in tests.' : 'No Java process running yet.';
+      range.value = Math.round(f * SPAN);
+    };
+    range.addEventListener('input', () => scrubTo(range.value / SPAN));
+    dial.s.addEventListener('pointerdown', e => { dial.s.setPointerCapture(e.pointerId); scrubTo(dial.fracAt(e.clientX, e.clientY)); });
+    dial.s.addEventListener('pointermove', e => { if (dial.s.hasPointerCapture(e.pointerId)) scrubTo(dial.fracAt(e.clientX, e.clientY)); });
+    replay.addEventListener('click', () => { sweep(); if (timelineReplay) timelineReplay(); });
+    dial.point(0);
+    dial.v.textContent = centerValue(0);
+    setTimeout(sweep, REDUCE ? 0 : 450);
+
+    // the run in figures
+    const fig = field(tone(), 'figures');
+    const sp = el('div', 'split');
+    const left = el('div');
+    const h2a = el('h2', null, 'The run in figures');
+    const totals = { startup: 0, test: 0, idle: 0, shutdown: 0, own: 0 };
+    procs.forEach(p => p.segs.forEach(s => { totals[s.phase] += s.e - s.s; }));
+    const totalProc = Object.values(totals).reduce((x, y) => x + y, 0);
+    const st2 = el('p', 'statement', plural(procs.length, 'Java process', 'Java processes') + ' used ' + fmt(totalProc) + ' between them, inside ' + fmt(S.elapsed) + ' of real time.');
+    add(left, h2a, st2);
+    const dl = el('dl', 'specs');
+    const spec = (label, valueNode, note) => {
+      const d = el('div', 'spec');
+      add(d, el('dt', null, label), add(el('dd'), valueNode, note ? (typeof note === 'string' ? el('span', 'note', note) : add(el('span', 'note'), note)) : null));
+      dl.appendChild(d);
+      return d;
+    };
+    const big = ms => { const s = figure(ms, 'big'); return s; };
+    const count = n => { const s = el('span', 'big', String(n)); return s; };
+    const testsNote = el('span');
+    add(testsNote, plural(S.runs || 0, 'test run', 'test runs') + (S.longest != null ? ', longest ' + fmt(S.longest) : ''));
+    if (failed) add(testsNote, '. ', el('span', 'change bad', failed + ' failed'));
+    else if (passed && passed === allRuns.length) add(testsNote, '. All passed');
+    const specs = [
+      spec('Real time', big(S.elapsed), D.previous ? add(el('span'), changeOf(D.previous.elapsed, S.elapsed), ' than the previous run') : 'From the start of the run to the last process exit'),
+      spec('Katalon preparing', big(S.before), 'Before the first Java process started'),
+      spec('Start-up per process', big(S.startup), 'Median, from process start to the first listener call'),
+      spec('Running tests', big(S.tests), testsNote),
+      spec('Processes', count(S.processes), S.withTests + ' with tests, ' + S.listenerOnly + ' for listeners only'),
+      spec('At once, at peak', count(S.peak), isSuite && D.mode && D.mode.parallel ? 'Max Concurrent Instances set to ' + D.mode.max : 'Parallel execution off')
+    ];
+    add(sp, left, dl);
+    fig.w.appendChild(sp);
+    reveal([h2a, st2]);
+    reveal(specs, 160);
+    onEnter(fig);
+
+    // a race: every lane starts together and grows at the speed of real time
+    const raceSection = (id, title, subText, clockLabel, list, footText) => {
+      const sec = field(tone(), id);
+      const head = el('div', 'race-head');
+      const ht = el('div');
+      const h2 = el('h2', null, title);
+      const sub = el('p', 'statement', subText);
+      add(ht, h2, sub);
+      const clock = el('div', 'race-clock');
+      const clockV = el('b', null, fmt(0));
+      add(clock, clockV, clockLabel);
+      add(head, ht, clock);
+      const lanesBox = el('div', 'race');
+      const maxEnd = Math.max(1, ...list.map(r => r.from + r.ms));
+      const step = niceStep(maxEnd, 5);
+      const scale = Math.ceil(maxEnd * 1.04 / step) * step;
+      const lanes = list.map(r => {
+        const lane = el('div', 'lane');
+        lane.tabIndex = 0;
+        lane.setAttribute('aria-label', r.name + ': ' + r.value + ', ' + r.note + (r.best ? ', fastest' : ''));
+        const track = el('div', 'lane-track');
+        const bar = el('div', 'lane-bar ' + r.cls);
+        bar.style.left = (r.from / scale * 100) + '%';
+        const fin = el('div', 'lane-fin');
+        fin.style.left = 'calc(' + ((r.from + r.ms) / scale * 100) + '% + 18px)';
+        add(fin, el('span', 'v', r.value), el('span', 'n', r.note), r.best ? el('span', 'best', 'Fastest') : null);
+        add(track, bar, fin);
+        add(lane, el('div', 'lane-name', r.name), track);
+        const show = (x, y) => showTip(x, y, r.value, [[r.name]].concat(r.tip));
+        lane.addEventListener('pointermove', e => show(e.clientX, e.clientY));
+        lane.addEventListener('pointerleave', hideTip);
+        lane.addEventListener('focus', () => { const b = lane.getBoundingClientRect(); show(b.left + 200, b.bottom - 8); });
+        lane.addEventListener('blur', hideTip);
+        lanesBox.appendChild(lane);
+        return { r, bar, fin, w: r.ms / scale * 100 };
+      });
+      const axis = el('div', 'race-axis');
+      for (let v = 0; v <= scale + 1; v += step) { const t = el('span', null, tickLabel(v, scale)); t.style.left = (v / scale * 100) + '%'; axis.appendChild(t); }
+      lanesBox.appendChild(axis);
+      const foot = footText ? el('p', 'foot', footText) : null;
+      add(sec.w, head, lanesBox, foot);
+      reveal([h2, sub, clock]);
+      reveal([lanesBox, foot], 200);
+      const timers = [];
+      const run = () => {
+        timers.forEach(clearTimeout);
+        const RACE = 3000;
+        lanes.forEach(L => { L.bar.style.transition = 'none'; L.bar.style.width = '0'; L.fin.classList.remove('in'); });
+        void lanesBox.offsetWidth;
+        lanes.forEach(L => {
+          const delay = REDUCE ? 0 : RACE * L.r.from / maxEnd;
+          const dur = REDUCE ? 0 : RACE * L.r.ms / maxEnd;
+          L.bar.style.transition = 'width ' + dur + 'ms linear ' + delay + 'ms';
+          L.bar.style.width = L.w + '%';
+          timers.push(setTimeout(() => L.fin.classList.add('in'), delay + dur));
+        });
+        tween(RACE, p => { clockV.textContent = fmt(p * maxEnd); }, null);
+      };
+      onEnter(sec, () => setTimeout(run, REDUCE ? 0 : 500));
+      return sec;
+    };
+
+    if (hasOptions) {
+      raceSection('settings',
+        a && !a.currentFastest ? a.fastest + ' finishes first.' : (D.options.filter(o => o.measured).length > 1 ? 'This setting finishes first.' : 'One setting measured so far.'),
+        a && !a.currentFastest ? a.action : 'Run the suite once with another setting to measure it against this one.',
+        'race clock, all settings start together',
+        D.options.map(o => ({ name: o.label, from: 0, ms: o.millis, cls: o.current ? 'current' : (o.measured ? '' : 'est'),
+          note: noteOf(o), best: o.fastest, value: (o.measured ? '' : '~') + fmt(o.millis),
+          tip: [[o.current ? 'The setting this run used' : (o.measured ? 'Measured in earlier runs' : 'Estimate, not run yet')], [noteOf(o)]].concat(o.fastest ? [['Fastest measured setting']] : []) })),
+        'A measured setting shows the median of its last 5 runs, so one slow or fast run does not decide the result. Estimates use the start-up time measured at the nearest setting you have run; running a setting once replaces its estimate.');
+    } else if (!isSuite && D.suites && D.suites.length) {
+      raceSection('settings', 'Suites, as they ran.', 'Each suite from its first process to its last, on the collection\'s clock.', 'collection clock',
+        D.suites.map(su => ({ name: su.name, from: su.start - T0, ms: su.elapsed, cls: 'current', note: 'from +' + fmt(su.start - T0), value: fmt(su.elapsed),
+          tip: [['From +' + fmt(su.start - T0) + ' to +' + fmt(su.start - T0 + su.elapsed)], [plural(su.processes, 'process', 'processes') + ', ' + plural(su.tests, 'test run', 'test runs')]] })), null);
+      if (D.plan && D.plan.options && D.plan.options.length > 1) {
+        const best = D.plan.options.reduce((m, o) => (o.millis < m.millis ? o : m));
+        raceSection('collection', D.plan.advice ? 'This collection could finish sooner.' : 'This collection is set up well.',
+          D.plan.advice || (D.plan.options.filter(o => o.measured).length > 1 ? 'Of every way you have run it, this one finishes first.' : 'Running its suites another way would not be faster, going by this run.'),
+          'race clock, every setting starts together',
+          D.plan.options.map(o => ({ name: o.label, from: 0, ms: o.millis, cls: o.current ? 'current' : (o.measured ? '' : 'est'),
+            note: noteOf(o), best: o === best && o.measured, value: (o.measured ? '' : '~') + fmt(o.millis),
+            tip: [[o.current ? 'How this run was set up' : (o.measured ? 'Measured in earlier runs of this collection' : 'Estimated from this run\'s suite times')], [noteOf(o)]] })),
+          D.plan.note);
+      }
+    }
+
+    // this suite over time, carried in the report so it also works as a CI artifact
+    if (D.trend && D.trend.length > 1) {
+      const sec = field(tone(), 'over-time');
+      const h2 = el('h2', null, 'Over time');
+      const sub = el('p', 'statement', 'Real time of the last ' + D.trend.length + ' runs, this run in orange. Pick a column to open that run.');
+      const box = el('div');
+      add(sec.w, h2, sub, box);
+      reveal([h2, sub]);
+      reveal([box], 150);
+      const series = D.trend;
+      const max = Math.max(1, ...series.map(r => r.elapsed));
+      const step = niceStep(max, 4);
+      const scale = Math.ceil(max * 1.15 / step) * step;
+      const minRun = series.reduce((m, r) => (r.elapsed < m.elapsed ? r : m));
+      const maxRun = series.reduce((m, r) => (r.elapsed > m.elapsed ? r : m));
+      const prevRun = D.previous ? series.find(r => r.session === D.previous.session) : null;
+      const wrap = el('div', 'trend');
+      const yl = el('div', 'trend-y');
+      for (let v = 0; v <= scale + 1; v += step) { const t = el('span', null, tickLabel(v, scale)); t.style.bottom = (v / scale * 100) + '%'; yl.appendChild(t); }
+      const plot = el('div', 'trend-plot');
+      const cols = el('div', 'trend-cols');
+      const grows = [];
+      series.forEach((r, i) => {
+        const col = r.current ? el('div', 'trend-col') : link('trend-col', null, r.href);
+        col.setAttribute('aria-label', when(r.at) + ', ' + r.setting + ': ' + fmt(r.elapsed) + (r.current ? ', this run' : ''));
+        if (r.current) col.tabIndex = 0;
+        const h = r.elapsed / scale * 100;
+        const bar = el('div', 'trend-bar ' + (r.current ? 'newer' : (r === prevRun ? 'older' : '')));
+        bar.style.setProperty('--d', (i * 60) + 'ms');
+        col.appendChild(bar);
+        if (series.length <= 4 || r.current || r === minRun || r === maxRun) {
+          const cap = figure(r.elapsed, 'trend-cap');
+          cap.style.bottom = 'calc(' + h + '% + 12px)';
+          cap.style.setProperty('--d', (i * 60 + 700) + 'ms');
+          col.appendChild(cap);
+        }
+        if (series.length <= 14) col.appendChild(el('span', 'trend-x', r.setting === 'Parallel off' ? 'off' : r.setting.replace('Parallel, ', '')));
+        const show = (x, y) => showTip(x, y, fmt(r.elapsed), [[r.setting], [when(r.at)], [plural(r.runs || 0, 'test run', 'test runs') + ', ' + (r.failed || 0) + ' failed'], [r.current ? 'This run' : 'Click to open this run']]);
+        col.addEventListener('pointermove', e => show(e.clientX, e.clientY));
+        col.addEventListener('pointerleave', hideTip);
+        col.addEventListener('focus', () => { const b = col.getBoundingClientRect(); show(b.right, b.top); });
+        col.addEventListener('blur', hideTip);
+        cols.appendChild(col);
+        grows.push(() => { bar.style.height = h + '%'; });
+      });
+      plot.appendChild(cols);
+      add(wrap, yl, plot);
+      box.appendChild(wrap);
+      onEnter(sec, () => grows.forEach(g => requestAnimationFrame(g)));
+    }
+
+    // where the process time went
+    const share = field(tone(), 'time');
+    const sp2 = el('div', 'split');
+    const big2 = el('div');
+    const lead = PHASES.reduce((m, p) => (totals[p.key] > totals[m.key] ? p : m), PHASES[0]);
+    const pctNode = el('span', 'pct', '0%');
+    const pctOf = el('p', 'pct-of', 'of all process time went to ' + lead.name.toLowerCase() + '.');
+    add(big2, pctNode, pctOf);
+    const parts = el('div', 'parts');
+    const h2b = el('h2', null, 'Where the time went');
+    const partNodes = PHASES.map((p, i) => {
+      const row = el('div', 'part');
+      const top = el('div', 'part-top');
+      add(top, el('span', 'part-name', p.name), figure(totals[p.key], 'part-v'), el('span', 'part-share', pct(totals[p.key], totalProc) + '%'));
+      const bar = el('div', 'part-bar');
+      const fill = el('i', 'k-' + p.key);
+      fill.style.setProperty('--w', (totalProc ? totals[p.key] / totalProc * 100 : 0) + '%');
+      fill.style.setProperty('--d', (300 + i * 120) + 'ms');
+      bar.appendChild(fill);
+      add(row, top, bar);
+      row.addEventListener('pointermove', e => showTip(e.clientX, e.clientY, fmt(totals[p.key]), [[p.name, p.key], [pct(totals[p.key], totalProc) + '% of all process time'], [p.hint]]));
+      row.addEventListener('pointerleave', hideTip);
+      return row;
+    });
+    const overlap = el('p', 'foot', fmt(totalProc) + ' of process time in ' + fmt(S.elapsed) + ' of real time' + (totalProc > S.elapsed * 1.05 ? ': the processes overlapped ' + (totalProc / S.elapsed).toFixed(1) + ' times over.' : '.'));
+    add(parts, h2b, ...partNodes, overlap);
+    add(sp2, big2, parts);
+    share.w.appendChild(sp2);
+    reveal([pctNode, pctOf]);
+    reveal([h2b, ...partNodes, overlap], 120);
+    onEnter(share, () => tween(1600, p => { pctNode.textContent = Math.round(p * pct(totals[lead.key], totalProc)) + '%'; }, easeOut));
+
+    if (D.tests && D.tests.length) {
+      const sec = field(tone(), 'tests');
+      const slowerBy = D.slowerBy || 25;
+      const flagged = isSuite ? D.tests.filter(t => t.usual && t.ms > t.usual * (1 + slowerBy / 100) && t.ms - t.usual >= 1000) : [];
+      const h2 = el('h2', null, 'The tests');
+      const sub = el('p', 'statement', isSuite
+        ? (flagged.length ? plural(flagged.length, 'test was', 'tests were') + ' slower than usual in this run.'
+          : (D.tests.some(t => t.usual) ? 'No test was slower than usual in this run.' : 'The slowest tests in this run. After three runs, each test is also compared with its usual time.'))
+        : 'The slowest tests across every suite in this collection.');
+      const rankList = (title, rows, valueOf, subOf, barOf) => {
+        const col = el('div');
+        col.appendChild(el('h3', 'h3', title));
+        const list = el('div', 'rank');
+        rows.forEach((t, i) => {
+          const row = el('div', 'rank-row' + (failedRun(t.status) ? ' bad' : ''));
+          const nm = el('div', 'rank-name');
+          nm.title = t.id;
+          const subText = subOf(t);
+          add(nm, t.name, subText ? el('small', null, subText) : null);
+          const bar = el('div', 'rank-bar');
+          const fill = el('i');
+          fill.style.setProperty('--w', Math.max(0.5, barOf(t)) + '%');
+          fill.style.setProperty('--d', (i * 80) + 'ms');
+          bar.appendChild(fill);
+          add(row, nm, el('div', 'rank-v', valueOf(t)), bar);
+          list.appendChild(row);
+        });
+        col.appendChild(list);
+        return col;
+      };
+      const top = D.tests.slice(0, 8);
+      const topMax = Math.max(1, ...top.map(t => t.ms));
+      const cols = el('div', 'cols');
+      cols.appendChild(rankList('Slowest tests', top, t => fmt(t.ms),
+        t => [t.suite, failedRun(t.status) ? String(t.status).toLowerCase() : null, t.usual ? 'usually ' + fmt(t.usual) : null].filter(Boolean).join(', '),
+        t => t.ms / topMax * 100));
+      if (isSuite) {
+        if (flagged.length) {
+          cols.appendChild(rankList('Slower than usual', flagged.slice(0, 8), t => '+' + Math.round((t.ms - t.usual) / t.usual * 100) + '%',
+            t => fmt(t.ms) + ' this run, usually ' + fmt(t.usual), t => t.usual / t.ms * 100));
+        } else {
+          cols.appendChild(add(el('div'), el('h3', 'h3', 'Slower than usual'), el('p', 'foot', D.tests.some(t => t.usual)
+            ? 'None. Every test ran within ' + slowerBy + '% of its usual time, or within a second of it.'
+            : 'Each test is compared with its median over the suite\'s recent runs once it has run three times.')));
+        }
+      }
+      add(sec.w, h2, sub, cols);
+      reveal([h2, sub]);
+      reveal([cols], 150);
+      if (D.split && D.split.plans && D.split.plans.length) {
+        const sp = el('div', 'split-box');
+        const plans = D.split.plans;
+        add(sp, el('h3', 'h3', 'Spread over machines'), el('p', 'foot', D.split.tests + ' tests take ' + fmt(D.split.total) + ' of test time. Split ' +
+          plans.map((pl, i) => (i === 0 ? 'across ' + pl.parts + ' machines, the longest part takes about ' : 'across ' + pl.parts + ', about ') + fmt(pl.longest)).join('; ') +
+          '. Each part becomes a suite of its own, for example one per CI agent.'));
+        plans.forEach(pl => {
+          const det = el('details', 'plan');
+          det.appendChild(el('summary', null, pl.parts + ' parts, the longest about ' + fmt(pl.longest)));
+          const grid = el('div', 'plan-cols');
+          pl.tests.forEach((names, i) => {
+            const c = el('div');
+            c.appendChild(el('div', null, 'Part ' + (i + 1) + ', ' + fmt(pl.loads[i])));
+            const ol = el('ol');
+            names.forEach(n => ol.appendChild(el('li', null, n)));
+            c.appendChild(ol);
+            grid.appendChild(c);
+          });
+          det.appendChild(grid);
+          sp.appendChild(det);
+        });
+        sec.w.appendChild(sp);
+        reveal([sp], 250);
+      }
+      onEnter(sec);
+    }
+
+    // every process, second by second
+    const tlSec = field(tone(), 'timeline');
+    const tlHead = el('div', 'tl-head');
+    const tlText = el('div');
+    const h2c = el('h2', null, 'Second by second');
+    const tlSub = el('p', 'statement', 'Every Java process Katalon started for this run, from its start to its exit.');
+    add(tlText, h2c, tlSub);
+    const tlReplay = el('button', 'btn quiet', 'Replay');
+    tlReplay.type = 'button';
+    add(tlHead, tlText, tlReplay);
+    const legend = el('div', 'legend');
+    [['k-prep', 'Katalon preparing'], ['k-startup', 'Start-up'], ['k-test', 'Running test'], ['fail', 'Failed test'], ['k-idle', 'Listeners and idle'], ['k-shutdown', 'Shutdown']].concat(OWN ? [['k-own', 'Run Clock itself']] : [])
+      .forEach(([k, t]) => legend.appendChild(add(el('span'), el('i', k), t)));
+    const host = el('div', 'tl');
+    add(tlSec.w, tlHead, legend, host);
+    reveal([h2c, tlSub, tlReplay]);
+    reveal([legend, host], 200);
+
+    let timelineReplay = null;
+    let tlToken = null;
+    const renderTimeline = W => {
+      host.replaceChildren();
+      const LABEL = W < 700 ? 110 : 280;
+      const TW = W - LABEL;
+      const x = t => (t - T0) / SPAN * TW;
+      const step = niceStep(SPAN, Math.max(2, Math.floor(TW / 96)));
+      const axis = el('div', 'tl-axis');
+      axis.style.marginLeft = LABEL + 'px';
+      for (let v = 0; v <= SPAN + 1; v += step) {
+        const t = el('span', 'tl-tick', tickLabel(v, SPAN));
+        t.style.left = (v / SPAN * TW) + 'px';
+        if (v === 0) t.style.transform = 'none';
+        axis.appendChild(t);
+      }
+      const body = el('div');
+      body.style.position = 'relative';
+      const segs = [];
+      const tlRows = !isSuite ? [] : rows;
+      if (!isSuite) {
+        if (rows[0] && rows[0].segs[0].phase === 'prep') tlRows.push(rows[0]);
+        D.suites.forEach(s => {
+          tlRows.push({ header: true, label: s.name + ', ' + fmt(s.elapsed) });
+          rows.filter(r => r.proc && (r.proc.group || r.proc.suite) === (s.key || s.id)).forEach(r => tlRows.push(r));
+        });
+      }
+      const lanes = tlRows.filter(r => !r.header).length;
+      const COMPACT = lanes > 40;
+      const RH = COMPACT ? Math.max(6, Math.min(14, Math.floor(1400 / lanes))) : 36;
+      if (COMPACT) body.appendChild(el('p', 'foot', plural(procs.length, 'process', 'processes') + ', one thin row each. Hover a bar for its test and timings; every number is also in the tables below.'));
+      tlRows.forEach(r => {
+        if (r.header) { body.appendChild(el('div', 'tl-group', r.label)); return; }
+        const row = el('div', 'tl-row');
+        row.style.gridTemplateColumns = LABEL + 'px 1fr';
+        row.style.height = RH + 'px';
+        const lab = el('div', 'tl-label');
+        lab.title = r.label;
+        if (!COMPACT) add(lab, el('span', 'tl-name', r.label), r.pid ? el('span', 'tl-pid', String(r.pid)) : null);
+        const track = el('div', 'tl-track');
+        r.segs.forEach(sg => {
+          const fail = sg.phase === 'test' && failedRun(sg.run.status);
+          const nd = el('div', 'seg k-' + sg.phase + (fail ? ' fail' : ''));
+          nd.style.left = x(sg.s) + 'px';
+          nd.style.width = Math.max(2, x(sg.e) - x(sg.s) - 2) + 'px';
+          if (COMPACT) { nd.style.top = '1px'; nd.style.height = (RH - 2) + 'px'; } else nd.tabIndex = 0;
+          nd.setAttribute('role', 'img');
+          nd.setAttribute('aria-label', (sg.phase === 'test' ? sg.run.name + ', ' + String(sg.run.status || '').toLowerCase() : PHASE_NAME[sg.phase]) + ': ' + fmt(sg.e - sg.s));
+          const show = (cx, cy) => showTip(cx, cy, fmt(sg.e - sg.s), segLines(sg, r));
+          nd.addEventListener('pointermove', e => show(e.clientX, e.clientY));
+          nd.addEventListener('pointerleave', hideTip);
+          nd.addEventListener('focus', () => { const b = nd.getBoundingClientRect(); show(b.right, b.top); });
+          nd.addEventListener('blur', hideTip);
+          track.appendChild(nd);
+          segs.push({ nd, sg });
+        });
+        add(row, lab, track);
+        body.appendChild(row);
+      });
+      const strip = el('div', 'tl-row tl-strip');
+      strip.style.gridTemplateColumns = LABEL + 'px 1fr';
+      const ev = [];
+      procs.forEach(p => { ev.push([p.jvmStart, 1]); ev.push([p.end, -1]); });
+      ev.sort((m, k) => m[0] - k[0] || m[1] - k[1]);
+      let c = 0, peak = 0;
+      const pts = ev.map(([t, d]) => { c += d; peak = Math.max(peak, c); return [t, c]; });
+      peak = Math.max(1, peak);
+      add(strip, add(el('div', 'tl-label'), el('span', 'tl-name', 'Processes running'), el('span', 'tl-pid', 'peak ' + peak)));
+      const st3 = el('div', 'tl-track');
+      const H = 88;
+      const y = k => H - 4 - k / peak * (H - 14);
+      let d = 'M0 ' + y(0);
+      pts.forEach(([t, k]) => { d += ' H' + x(t).toFixed(1) + ' V' + y(k).toFixed(1); });
+      d += ' H' + TW;
+      const s = svg('svg', { width: TW, height: H, 'aria-hidden': 'true' });
+      s.appendChild(svg('path', { d: d + ' V' + y(0) + ' H0 Z', fill: 'var(--fg)', opacity: '.1' }));
+      s.appendChild(svg('path', { d, fill: 'none', stroke: 'var(--fg)', 'stroke-width': 1.5, 'stroke-linejoin': 'round' }));
+      st3.appendChild(s);
+      strip.appendChild(st3);
+      body.appendChild(strip);
+      const head = el('div', 'playhead');
+      const headLab = el('b');
+      head.appendChild(headLab);
+      body.appendChild(head);
+      add(host, axis, body);
+      timelineReplay = () => {
+        if (tlToken) tlToken.stop = true;
+        tlToken = {};
+        const tk = tlToken;
+        host.classList.add('replaying');
+        head.classList.add('on');
+        segs.forEach(o => o.nd.classList.remove('lit'));
+        return tween(3600, p => {
+          const t = T0 + p * SPAN;
+          head.style.left = (LABEL + x(t)) + 'px';
+          head.classList.toggle('flip', x(t) > TW - 180);
+          const live = runningAt(t);
+          headLab.textContent = '+' + fmt(t - T0) + ', ' + live.n + ' running';
+          segs.forEach(o => { if (o.sg.s <= t) o.nd.classList.add('lit'); });
+        }, null, tk).then(() => { if (!tk.stop) { host.classList.remove('replaying'); head.classList.remove('on'); } });
+      };
+    };
+    let lastW = 0;
+    const draw = () => { const w = host.clientWidth; if (!w || w === lastW) return; lastW = w; renderTimeline(w); };
+    requestAnimationFrame(draw);
+    new ResizeObserver(draw).observe(host);
+    tlReplay.addEventListener('click', () => timelineReplay && timelineReplay());
+    onEnter(tlSec, () => setTimeout(() => timelineReplay && timelineReplay(), REDUCE ? 0 : 600));
+
+    // the numbers, as recorded
+    const num = field(tone(), 'numbers');
+    const h2d = el('h2', null, 'Every number');
+    const numSub = el('p', 'statement', 'Each process and test run as Run Clock recorded it, and the summary Katalon shows in its Log Viewer.');
+    const table = (cols, data) => {
+      const t = el('table', 'tbl wide');
+      const hr = el('tr');
+      cols.forEach(([h, isNum]) => hr.appendChild(el('th', isNum ? 'n' : null, h)));
+      add(t, add(el('thead'), hr));
+      const tb = el('tbody');
+      const rowOf = cells => {
+        const tr = el('tr');
+        cells.forEach((v, i) => tr.appendChild(add(el('td', cols[i][1] ? 'n' : null), v)));
+        return tr;
+      };
+      data.slice(0, ROWS).forEach(cells => tb.appendChild(rowOf(cells)));
+      t.appendChild(tb);
+      return add(el('div', 'table-wrap'), t, moreRows(data.length, () => data.slice(ROWS).forEach(cells => tb.appendChild(rowOf(cells)))));
+    };
+    const procTable = table(
+      [['Process'], ['PID', 1], ['Starts at', 1], ['Start-up', 1], ['In tests', 1], ['Shutdown', 1], ['Ends at', 1], ['Lifetime', 1]],
+      procs.map(p => [
+        (!isSuite ? p.suiteName + ': ' : '') + p.label, String(p.pid), '+' + fmt(p.jvmStart - T0),
+        fmt(p.first != null ? p.first - p.jvmStart : null), p.runs.length ? fmt(p.runs.reduce((m, r) => m + (r.end - r.start), 0)) : '-',
+        fmt(p.exit != null && p.last != null ? p.exit - p.last : null), '+' + fmt(p.end - T0), fmt(p.end - p.jvmStart)]));
+    const testTable = table(
+      [['Test case'], ['Result'], ['Duration', 1], ['Starts at', 1], ['Process', 1]],
+      procs.reduce((acc, p) => acc.concat(p.runs.map(r => {
+        const name = el('span', null, r.name);
+        name.title = r.id;
+        const st4 = String(r.status || 'unknown');
+        return [name, el('span', failedRun(st4) ? 'bad' : null, st4.charAt(0) + st4.slice(1).toLowerCase()), fmt(r.end - r.start), '+' + fmt(r.start - T0), String(p.pid)];
+      })), []));
+    const t1 = el('h3', 'table-title', 'Processes');
+    const t2 = el('h3', 'table-title', 'Test runs');
+    const t3 = el('h3', 'table-title', 'Plain-text summary');
+    const copyRow = el('div', 'copy-row');
+    const copy2 = el('button', 'btn quiet', 'Copy summary');
+    copy2.type = 'button';
+    copy2.addEventListener('click', () => copyText(D.summary, copy2));
+    copyRow.appendChild(copy2);
+    const tables = el('div', 'tables');
+    add(tables, t1, procTable, t2, testTable, t3, el('pre', 'summary', D.summary), copyRow);
+    add(num.w, h2d, numSub, tables);
+    reveal([h2d, numSub, tables]);
+    onEnter(num);
+
+    closeSection(
+      ['Written ' + when(D.generated) + '.', 'Real time runs from the start of the run to the exit of the last process. Time Katalon spends on its own reports after that is not included.'].concat(S.own > 0 ? ['Run Clock wrote this report in ' + fmt(S.own) + ' after the tests. That time is left out of the real time and of every comparison.'] : [])
+        .concat(D.history === 'off' ? ['History is off for this project, so this report stands alone.'] : (D.history === 'readonly' ? ['This run was compared with earlier runs but not added to them: history is read only.'] : [])),
+      [D.home ? ['All runs', D.home] : null, D.previous && D.previous.href ? ['Previous run', D.previous.href] : null]);
+  };
+
+  // home: every run in the project
+  const homePage = () => {
+    const runs = D.runs || [];
+    document.title = 'All runs | Run Clock';
+    const suites = [];
+    runs.forEach(r => { if (!suites.some(s => s.id === r.entity)) suites.push({ id: r.entity, title: r.title }); });
+    const prevOf = r => (r ? runs.find(x => x.entity === r.entity && x.at < r.at) : null);
+    const latest = runs[0];
+    buildNav(latest ? [['Compare', '#compare'], ['History', '#history'], ['Every run', '#runs']] : [], latest ? link('nav-action', 'Open latest report', latest.href) : null);
+
+    const hero = field('night', 'top', 'hero-field');
+    hero.w.classList.add('hero');
+    const text = el('div');
+    const h1 = el('h1', null, D.project ? 'Every run of ' + D.project : 'Every run');
+    add(text, h1);
+    if (!latest) {
+      const st = el('p', 'statement', 'No runs recorded yet. Run any test suite or collection in Katalon Studio and it appears here.');
+      text.appendChild(st);
+      hero.w.appendChild(text);
+      reveal([h1, st]);
+      onEnter(hero);
+      closeSection(['Updated ' + when(D.generated) + '.'], []);
+      return;
+    }
+    const latestPrev = prevOf(latest);
+    const st = el('p', 'statement');
+    add(st, 'The latest run, ' + latest.title + ' with ' + latest.setting + ', took ' + fmt(latest.elapsed) + ' at ' + timeOnly(latest.at) + ' (' + ago(latest.at) + ')');
+    if (latestPrev) {
+      const ch = changeOf(latestPrev.elapsed, latest.elapsed);
+      if (ch.classList.contains('same')) add(st, ', the same as the run before.');
+      else add(st, ': ', ch, ' than the run before.');
+    } else add(st, '. It is the first run of this suite on record.');
+    const meta = el('p', 'meta', plural(runs.length, 'run', 'runs') + ' of ' + plural(suites.length, 'suite', 'suites') + ' on record, latest first. Updated ' + when(D.generated) + '.');
+    const actions = el('div', 'actions');
+    add(actions, link('btn', 'Open the latest report', latest.href), link('textlink', 'Compare two runs', '#compare'));
+    add(text, st, meta, actions);
+
+    // the history as a dial: newest ring outermost, arc length is real time
+    const box = el('div', 'dial-box');
+    const shown = runs.filter(r => r.entity === latest.entity).slice(0, 10);
+    const maxEl = Math.max(1, ...shown.map(r => r.elapsed));
+    const hstep = niceStep(maxEl, 6);
+    const top = Math.ceil(maxEl * 1.05 / hstep) * hstep;
+    const dial = dialFrame(v => tickLabel(v, top), top, 0.025);
+    dial.s.classList.add('rings');
+    dial.s.setAttribute('role', 'group');
+    dial.s.style.cursor = 'default';
+    dial.s.setAttribute('aria-label', 'Real time of the last ' + plural(shown.length, 'run', 'runs') + ' of ' + latest.title + ', newest outermost');
+    const pitch = Math.min(24, 108 / shown.length);
+    const th = Math.max(2, Math.min(12, pitch - 6));
+    const centre = r => {
+      dial.point(r.elapsed / top, false);
+      dial.v.textContent = centerValue(r.elapsed);
+      dial.l.textContent = centerUnit(r.elapsed) + (r === latest ? ', latest run' : ', ' + whenShort(r.at));
+    };
+    shown.forEach((r, i) => {
+      const rad = 252 - pitch * i - pitch / 2;
+      dial.lanes.appendChild(svg('circle', { cx: 300, cy: 300, r: rad, class: 'lane-track', 'stroke-width': th }));
+      const label = r.title + ', ' + when(r.at) + ', ' + r.setting + ': ' + fmt(r.elapsed);
+      const a = r.href ? svg('a', { href: safeHref(r.href), 'aria-label': label }) : svg('g', { 'aria-label': label });
+      const p = svg('path', { d: dial.arc(rad, dial.ang(0), dial.ang(r.elapsed / top)), class: 'ring' + (i === 0 ? '' : (i === 1 ? '' : ' other')), stroke: i === 0 ? '#ff5b1f' : 'var(--ivory)', 'stroke-width': th });
+      a.appendChild(p);
+      const show = (x, y) => showTip(x, y, fmt(r.elapsed), [[r.setting], [when(r.at)], [plural(r.runs, 'test run', 'test runs') + ', ' + r.failed + ' failed'], ['Click to open this run']]);
+      a.addEventListener('pointermove', e => { show(e.clientX, e.clientY); centre(r); });
+      a.addEventListener('pointerleave', () => { hideTip(); centre(latest); });
+      a.addEventListener('focus', () => centre(r));
+      a.addEventListener('blur', () => centre(latest));
+      dial.lanes.appendChild(a);
+    });
+    const caption = el('div', 'readout', shown.length > 1 ? 'Last ' + shown.length + ' runs of ' + latest.title + '. Newest outermost, in orange.' : latest.title + ', latest run.');
+    add(box, dial.s, caption);
+    add(hero.w, text, box);
+    reveal([h1, st, meta, actions]);
+    reveal([box], 200);
+    onEnter(hero);
+    dial.point(0);
+    dial.v.textContent = centerValue(0);
+    dial.l.textContent = centerUnit(latest.elapsed) + ', latest run';
+    setTimeout(() => tween(2400, p => { dial.point(p * latest.elapsed / top, p); dial.v.textContent = centerValue(p * latest.elapsed); }, easeInOut).then(() => centre(latest)), REDUCE ? 0 : 450);
+
+    // comparison, history and the list share one suite filter and one selection
+    let filter = latest.entity;
+    let ticks = [];
+    const visible = () => (filter === '*' ? runs : runs.filter(r => r.entity === filter));
+    const pair = () => {
+      if (ticks.length === 2) {
+        const [x, y] = ticks.map(s => runs.find(r => r.session === s)).sort((m, k) => m.at - k.at);
+        return { a: x, b: y, custom: true };
+      }
+      const newest = visible()[0] || latest;
+      return { a: prevOf(newest), b: newest, custom: false };
+    };
+
+    const cmpSec = field('stone', 'compare');
+    const cmpBox = el('div');
+    cmpSec.w.appendChild(cmpBox);
+    onEnter(cmpSec);
+
+    const hisSec = field('night', 'history');
+    const hisHead = el('div', 'race-head');
+    const hisText = el('div');
+    const h2h = el('h2', null, 'Real time, run by run');
+    const hisSub = el('p', 'statement', 'Oldest on the left. Pick a column to open that run.');
+    add(hisText, h2h, hisSub);
+    const lab = el('label', 'filter');
+    const select = el('select');
+    const all = el('option', null, 'All suites');
+    all.value = '*';
+    select.appendChild(all);
+    suites.forEach(s => { const o = el('option', null, s.title); o.value = s.id; select.appendChild(o); });
+    select.value = filter;
+    add(lab, 'Suite', select);
+    add(hisHead, hisText, lab);
+    const trendBox = el('div');
+    add(hisSec.w, hisHead, trendBox);
+    reveal([h2h, hisSub, lab]);
+    onEnter(hisSec);
+
+    const runSec = field('stone', 'runs');
+    const h2r = el('h2', null, 'Every run');
+    const runSub = el('p', 'statement', 'Latest first. Tick two runs to compare them side by side.');
+    const tableBox = el('div', 'table-wrap tables');
+    add(runSec.w, h2r, runSub, tableBox);
+    reveal([h2r, runSub, tableBox]);
+    onEnter(runSec);
+
+    const renderCompare = () => {
+      const { a, b, custom } = pair();
+      cmpBox.replaceChildren();
+      const sp = el('div', 'split');
+      const left = el('div');
+      const h2 = el('h2', null, custom ? 'Two runs, side by side' : (b === latest ? 'Latest against the run before' : 'Newest against the run before'));
+      const sub = el('p', 'statement', a
+        ? b.title + ' with ' + b.setting + ' at ' + whenShort(b.at) + ', against ' + (a.entity !== b.entity ? a.title + ' with ' : '') + a.setting + ' at ' + whenShort(a.at) + '.'
+        : 'There is no earlier run of ' + b.title + ' yet. Run it again to compare.');
+      const acts = el('div', 'actions');
+      add(acts, b.href ? link('btn quiet', 'Open newer report', b.href) : null, a && a.href ? link('textlink', 'Open older report', a.href) : null);
+      if (custom) {
+        const back = el('button', 'textlink', 'Back to latest against the run before');
+        back.type = 'button';
+        back.style.cssText = 'border:0;background:none;padding:0;cursor:pointer;font-size:16px';
+        back.addEventListener('click', () => { ticks = []; refresh(); });
+        acts.appendChild(back);
+      }
+      add(left, h2, sub, acts);
+      const grid = el('div', 'compare');
+      const headRow = el('div', 'cmp-head');
+      add(headRow, el('span'), el('span', null, a ? 'Before, ' + whenShort(a.at) : ''), el('span', null, (custom ? 'After, ' : 'Latest, ') + whenShort(b.at)), el('span', null, 'Change'));
+      grid.appendChild(headRow);
+      const rowsC = [['Real time', 'elapsed'], ['Katalon preparing', 'before'], ['Start-up per process', 'startup'], ['Running tests', 'tests']].map(([label, key], i) => {
+        const row = el('div', 'cmp-row');
+        add(row, el('span', 'label', label), a ? figure(a[key], 'v') : el('span', 'v', '-'), figure(b[key], 'v'), a ? changeOf(a[key], b[key]) : el('span', 'change same', '-'));
+        const bars = el('div', 'cmp-bars');
+        const m = Math.max(a ? a[key] : 0, b[key]) || 1;
+        if (a) { const o = el('i', 'old'); o.style.setProperty('--w', (a[key] / m * 100) + '%'); o.style.setProperty('--d', (i * 120) + 'ms'); bars.appendChild(o); }
+        const nw = el('i', 'new');
+        nw.style.setProperty('--w', (b[key] / m * 100) + '%');
+        nw.style.setProperty('--d', (i * 120 + 80) + 'ms');
+        bars.appendChild(nw);
+        row.appendChild(bars);
+        return row;
+      });
+      const tests = el('div', 'cmp-row');
+      add(tests, el('span', 'label', 'Tests'), el('span', 'meta', a ? a.runs + ' runs, ' + a.failed + ' failed' : '-'), el('span', 'meta', b.runs + ' runs, ' + b.failed + ' failed'), el('span'));
+      add(grid, ...rowsC, tests);
+      add(sp, left, grid);
+      cmpBox.appendChild(sp);
+      reveal([h2, sub, acts]);
+      reveal([headRow, ...rowsC, tests], 150);
+      if (cmpSec.classList.contains('in')) requestAnimationFrame(() => cmpBox.querySelectorAll('.r').forEach(n => n.classList.add('in')));
+    };
+
+    const renderTrend = list => {
+      trendBox.replaceChildren();
+      if (filter === '*') { trendBox.appendChild(el('p', 'empty', 'Choose one suite to see its real time run by run.')); return; }
+      const { a, b } = pair();
+      const series = list.slice(0, 30).reverse();
+      const max = Math.max(1, ...series.map(r => r.elapsed));
+      const step = niceStep(max, 4);
+      const scale = Math.ceil(max * 1.15 / step) * step;
+      const minRun = series.reduce((m, r) => (r.elapsed < m.elapsed ? r : m));
+      const maxRun = series.reduce((m, r) => (r.elapsed > m.elapsed ? r : m));
+      const wrap = el('div', 'trend');
+      const yl = el('div', 'trend-y');
+      for (let v = 0; v <= scale + 1; v += step) { const t = el('span', null, tickLabel(v, scale)); t.style.bottom = (v / scale * 100) + '%'; yl.appendChild(t); }
+      const plot = el('div', 'trend-plot');
+      const cols = el('div', 'trend-cols');
+      series.forEach((r, i) => {
+        const role = r === b ? 'newer' : (r === a ? 'older' : '');
+        const col = link('trend-col', null, r.href);
+        col.setAttribute('aria-label', r.title + ', ' + when(r.at) + ', ' + r.setting + ': ' + fmt(r.elapsed));
+        const h = r.elapsed / scale * 100;
+        const bar = el('div', 'trend-bar ' + role);
+        bar.style.setProperty('--d', (i * 70) + 'ms');
+        col.appendChild(bar);
+        if (series.length <= 4 || role || r === minRun || r === maxRun) {
+          const cap = figure(r.elapsed, 'trend-cap');
+          cap.style.bottom = 'calc(' + h + '% + 12px)';
+          cap.style.setProperty('--d', (i * 70 + 700) + 'ms');
+          col.appendChild(cap);
+        }
+        if (series.length <= 14) col.appendChild(el('span', 'trend-x', r.setting === 'Parallel off' ? 'off' : r.setting.replace('Parallel, ', '')));
+        const show = (x, y) => showTip(x, y, fmt(r.elapsed), [[r.setting], [when(r.at)], [plural(r.runs, 'test run', 'test runs') + ', ' + r.failed + ' failed'], ['Click to open this run']]);
+        col.addEventListener('pointermove', e => show(e.clientX, e.clientY));
+        col.addEventListener('pointerleave', hideTip);
+        col.addEventListener('focus', () => { const bx = col.getBoundingClientRect(); show(bx.right, bx.top); });
+        col.addEventListener('blur', hideTip);
+        cols.appendChild(col);
+        const grow = () => { bar.style.height = h + '%'; };
+        if (hisSec.classList.contains('in') || REDUCE) requestAnimationFrame(grow); else (hisSec._enter = hisSec._enter || []).push(grow);
+      });
+      plot.appendChild(cols);
+      add(wrap, yl, plot);
+      trendBox.appendChild(wrap);
+      h2h.textContent = 'Real time, run by run';
+    };
+
+    const renderTable = list => {
+      tableBox.replaceChildren();
+      const oneSuite = filter !== '*';
+      const t = el('table', 'tbl');
+      const hr = el('tr');
+      [[''], ['When'], oneSuite ? null : ['Suite'], ['Setting'], ['Real time', 1], ['Against the run before', 1], ['Start-up', 1], ['Tests', 1], ['Processes', 1], ['']]
+        .filter(Boolean).forEach(([h, isNum]) => hr.appendChild(el('th', isNum ? 'n' : null, h)));
+      add(t, add(el('thead'), hr));
+      const tb = el('tbody');
+      const rowFor = r => {
+        const tr = el('tr', ticks.includes(r.session) ? 'picked' : null);
+        const box2 = el('input');
+        box2.type = 'checkbox';
+        box2.checked = ticks.includes(r.session);
+        box2.setAttribute('aria-label', 'Compare the ' + r.title + ' run of ' + when(r.at));
+        box2.addEventListener('change', () => {
+          const i = ticks.indexOf(r.session);
+          if (box2.checked && i < 0) { ticks.push(r.session); if (ticks.length > 2) ticks.shift(); }
+          if (!box2.checked && i >= 0) ticks.splice(i, 1);
+          refresh();
+          if (ticks.length === 2) cmpSec.scrollIntoView({ behavior: REDUCE ? 'auto' : 'smooth', block: 'start' });
+        });
+        const whenCell = el('td');
+        const first = add(el('div'), whenShort(r.at));
+        if (r === latest) first.appendChild(el('span', 'latest', 'Latest'));
+        add(whenCell, first, el('div', 'dim', ago(r.at)));
+        const prev = prevOf(r);
+        const vs = el('td', 'n');
+        vs.appendChild((prev ? changeOf(prev.elapsed, r.elapsed) : null) || el('span', 'change same', 'first run'));
+        const tests = el('td', 'n');
+        tests.appendChild(r.failed ? el('span', 'bad', r.failed + ' failed') : el('span', 'dim', r.passed === r.runs ? 'all ' + r.runs + ' passed' : r.passed + ' passed'));
+        add(tr, add(el('td'), box2), whenCell, oneSuite ? null : el('td', null, r.title), el('td', null, r.setting), el('td', 'n', fmt(r.elapsed)), vs,
+          el('td', 'n', fmt(r.startup)), tests, el('td', 'n', String(r.processes)), add(el('td', 'n'), r.href ? link('open', 'Open report', r.href) : el('span', 'dim', 'Not on this machine')));
+        return tr;
+      };
+      const shown = list.filter((r, i) => i < 50 || ticks.includes(r.session));
+      shown.forEach(r => tb.appendChild(rowFor(r)));
+      t.appendChild(tb);
+      add(tableBox, t, list.length > shown.length ? moreRows(list.length, () => list.filter(r => !shown.includes(r)).forEach(r => tb.appendChild(rowFor(r)))) : null);
+    };
+
+    const refresh = () => {
+      const list = visible();
+      runSub.textContent = plural(list.length, 'run', 'runs') + ', latest first. Tick two runs to compare them side by side.';
+      renderCompare();
+      renderTrend(list);
+      renderTable(list);
+    };
+    select.addEventListener('change', () => { filter = select.value; ticks = []; refresh(); });
+    refresh();
+
+    closeSection(['Updated ' + when(D.generated) + '.', 'A run stays on this list while its folder exists under Reports. Runs from CI builds always stay, and open only where their report is.'], [['Open the latest report', latest.href]]);
+  };
+
+  if (D.page === 'home') homePage(); else runPage();
+})();
+</script>
+</body>
+</html>

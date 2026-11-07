@@ -21,6 +21,9 @@ Test Cases or Test Suites.
 **[Troubleshooting](#troubleshooting)** ·
 **[Architecture](ARCHITECTURE.md)**
 
+Open real reports in your browser: [a test suite](https://montbaga.github.io/katalon-run-clock/sample/Reports/20261105_151304/run-clock/summary.html) ·
+[a Test Suite Collection](https://montbaga.github.io/katalon-run-clock/sample/Reports/20261105_155603/run-clock/summary.html) · [the All runs page](https://montbaga.github.io/katalon-run-clock/sample/Reports/run-clock/index.html).
+
 ![A Run Clock report for a suite of four API tests: 27.2 s of real time with Parallel, max 4, against 6.6 s with parallel execution off](docs/images/report-hero.jpg)
 
 ## See It in Action
@@ -212,6 +215,10 @@ first. From there you can open any run's report, pick a suite to see its
 real time across runs, or tick two runs to compare them. It is rewritten
 after every run. Runs disappear from the list when you delete their folder
 under `Reports`, except runs from CI builds.
+
+Samples from 22 real runs, as Run Clock wrote them: [summary.html of a
+suite](https://montbaga.github.io/katalon-run-clock/sample/Reports/20261105_151304/run-clock/summary.html), [summary.html of a collection](https://montbaga.github.io/katalon-run-clock/sample/Reports/20261105_155603/run-clock/summary.html) and
+[index.html](https://montbaga.github.io/katalon-run-clock/sample/Reports/run-clock/index.html). Their files are in [`docs/sample`](docs/sample).
 
 To compare settings for a suite, run it once with each setting you want
 measured. The setting is under Test Suite > Execution Information >
