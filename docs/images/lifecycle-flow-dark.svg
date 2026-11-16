@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 220" width="1200" height="220" role="img" aria-label="Katalon Run Clock lifecycle: from JVM listener capture to offline reports and history">
+  <defs>
+    <style>
+      .sans { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    </style>
+  </defs>
+
+  <rect x="12" y="10" width="1176" height="200" rx="16" fill="#0f1219" stroke="#252c3b" stroke-width="1.2"/>
+  <text x="32" y="34" class="mono" font-size="10.5" letter-spacing="1.2" fill="#8b94a7">KATALON RUN CLOCK LIFECYCLE PIPELINE</text>
+  <text x="1168" y="34" text-anchor="end" class="mono" font-size="10.5" letter-spacing="1.0" fill="#8b94a7">ONE-TIME LAST-SUITE WRITE · EXCLUDED FROM CLOCK</text>
+
+  <!-- Step 01 -->
+  <rect x="28" y="52" width="224" height="136" rx="12" fill="#151924" stroke="#2d364a"/>
+  <rect x="44" y="67" width="38" height="20" rx="5" fill="#202736"/>
+  <text x="63" y="81" text-anchor="middle" class="mono" font-size="10.5" fill="#d0d7e3">01</text>
+  <text x="44" y="108" class="sans" font-size="15.5" font-weight="700" fill="#ece6da">Listener Hooks</text>
+  <text x="44" y="129" class="sans" font-size="11.5" fill="#9ca5b5">RunClockListener catches</text>
+  <text x="44" y="146" class="sans" font-size="11.5" fill="#9ca5b5">JVM launch, suite &amp; test</text>
+  <text x="44" y="163" class="sans" font-size="11.5" fill="#9ca5b5">start/end into *.jsonl.</text>
+
+  <!-- Bridge 1 -> 2 -->
+  <line x1="252" y1="120" x2="292" y2="120" stroke="#364057" stroke-width="2" stroke-dasharray="4 4"/>
+  <circle r="3.8" fill="#ff5b1f">
+    <animateMotion dur="1.8s" repeatCount="indefinite" path="M254,120 L290,120"/>
+  </circle>
+
+  <!-- Step 02 -->
+  <rect x="292" y="52" width="234" height="136" rx="12" fill="#151924" stroke="#2d364a"/>
+  <rect x="308" y="67" width="38" height="20" rx="5" fill="#202736"/>
+  <text x="327" y="81" text-anchor="middle" class="mono" font-size="10.5" fill="#d0d7e3">02</text>
+  <text x="308" y="108" class="sans" font-size="15.5" font-weight="700" fill="#ece6da">Every JVM Measured</text>
+  <text x="308" y="129" class="sans" font-size="11.5" fill="#9ca5b5">Tracks prepare wait, Java</text>
+  <text x="308" y="146" class="sans" font-size="11.5" fill="#9ca5b5">start-up, test body, idle,</text>
+  <text x="308" y="163" class="sans" font-size="11.5" fill="#9ca5b5">and normal process exit.</text>
+
+  <!-- Bridge 2 -> 3 -->
+  <line x1="526" y1="120" x2="566" y2="120" stroke="#ff5b1f" stroke-opacity="0.55" stroke-width="2" stroke-dasharray="4 4"/>
+  <circle r="4" fill="#ff5b1f">
+    <animateMotion dur="1.8s" begin="0.45s" repeatCount="indefinite" path="M528,120 L564,120"/>
+  </circle>
+
+  <!-- Step 03 (Highlighted Engine) -->
+  <rect x="566" y="48" width="258" height="144" rx="13" fill="#181b28" stroke="#ff5b1f" stroke-opacity="0.72" stroke-width="1.5"/>
+  <rect x="582" y="63" width="122" height="20" rx="5" fill="#2e1812"/>
+  <text x="643" y="77" text-anchor="middle" class="mono" font-size="9.5" fill="#ff8a5e">03 · LAST SUITE EXIT</text>
+  <text x="582" y="106" class="sans" font-size="16" font-weight="700" fill="#ece6da">RunClockReport</text>
+  <text x="582" y="127" class="sans" font-size="11.5" fill="#c0c7d4">Computes 5-run medians,</text>
+  <text x="582" y="144" class="sans" font-size="11.5" fill="#c0c7d4">races settings &amp; takes the</text>
+  <text x="582" y="161" class="sans" font-size="11.5" fill="#c0c7d4">10s lock on historyDir.</text>
+  <text x="582" y="180" class="mono" font-size="9.2" fill="#ff8a5e">OWN WRITE TIME LEFT OUT</text>
+
+  <!-- Branches 3 -> Outputs -->
+  <path d="M824,90 C852,90 854,70 884,70" fill="none" stroke="#3dd98f" stroke-opacity="0.55" stroke-width="1.6" stroke-dasharray="4 4"/>
+  <path d="M824,120 L884,120" fill="none" stroke="#ff5b1f" stroke-opacity="0.55" stroke-width="1.6" stroke-dasharray="4 4"/>
+  <path d="M824,150 C852,150 854,170 884,170" fill="none" stroke="#ffc857" stroke-opacity="0.55" stroke-width="1.6" stroke-dasharray="4 4"/>
+
+  <circle r="3.4" fill="#3dd98f"><animateMotion dur="2s" repeatCount="indefinite" path="M824,90 C852,90 854,70 884,70"/></circle>
+  <circle r="3.4" fill="#ff5b1f"><animateMotion dur="2s" begin="0.3s" repeatCount="indefinite" path="M824,120 L884,120"/></circle>
+  <circle r="3.4" fill="#ffc857"><animateMotion dur="2s" begin="0.6s" repeatCount="indefinite" path="M824,150 C852,150 854,170 884,170"/></circle>
+
+  <!-- Output A -->
+  <rect x="884" y="48" width="288" height="44" rx="9" fill="#13221d" stroke="#3dd98f" stroke-opacity="0.45"/>
+  <rect x="896" y="60" width="84" height="20" rx="5" fill="#1b3a2e"/>
+  <text x="938" y="74" text-anchor="middle" class="mono" font-size="9.5" fill="#3dd98f">SUMMARY.HTML</text>
+  <text x="990" y="67" class="sans" font-size="12" font-weight="700" fill="#ece6da">Offline Single-Run Report</text>
+  <text x="990" y="83" class="sans" font-size="10.5" fill="#9fb2ab">Dial, timeline, slowest &amp; splits</text>
+
+  <!-- Output B -->
+  <rect x="884" y="98" width="288" height="44" rx="9" fill="#231613" stroke="#ff5b1f" stroke-opacity="0.5"/>
+  <rect x="896" y="110" width="84" height="20" rx="5" fill="#382019"/>
+  <text x="938" y="124" text-anchor="middle" class="mono" font-size="9.5" fill="#ff8456">INDEX.HTML</text>
+  <text x="990" y="117" class="sans" font-size="12" font-weight="700" fill="#ece6da">All Runs Trend &amp; Diff</text>
+  <text x="990" y="133" class="sans" font-size="10.5" fill="#b8a59e">history.jsonl + 2-run diff</text>
+
+  <!-- Output C -->
+  <rect x="884" y="148" width="288" height="44" rx="9" fill="#231e13" stroke="#ffc857" stroke-opacity="0.45"/>
+  <rect x="896" y="160" width="84" height="20" rx="5" fill="#382d16"/>
+  <text x="938" y="174" text-anchor="middle" class="mono" font-size="9.5" fill="#ffc857">CI + SLACK</text>
+  <text x="990" y="167" class="sans" font-size="12" font-weight="700" fill="#ece6da">Pipeline &amp; Webhook</text>
+  <text x="990" y="183" class="sans" font-size="10.5" fill="#b5ab98">summary.md + alert webhook</text>
+</svg>

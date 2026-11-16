@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 176" width="1200" height="176" role="img" aria-label="Five ways Run Clock surfaces real katalon performance">
+  <defs>
+    <style>
+      .sans { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    </style>
+  </defs>
+
+  <rect x="12" y="10" width="1176" height="156" rx="16" fill="#f3efe7" stroke="#d5cebf" stroke-width="1.2"/>
+  <text x="32" y="35" class="mono" font-size="10.5" letter-spacing="1.2" fill="#5e6573">FIVE MEASUREMENTS AT A GLANCE  ·  VERIFIED ACROSS 22 REAL RUNS</text>
+  <text x="1168" y="35" text-anchor="end" class="mono" font-size="10.5" letter-spacing="1.0" fill="#5e6573">ZERO TEST FAILURES · OUTSIDE CLOCK</text>
+
+  <!-- Card 1 -->
+  <rect x="28" y="48" width="216" height="104" rx="11" fill="#ffffff" stroke="#d8d1c4"/>
+  <rect x="44" y="61" width="76" height="19" rx="5" fill="#fdebe4" stroke="#e04810" stroke-opacity="0.4"/>
+  <text x="82" y="74" text-anchor="middle" class="mono" font-size="9.5" fill="#c93e0c">01 · DIAL</text>
+  <circle cx="226" cy="70" r="3.5" fill="#e04810">
+    <animate attributeName="opacity" values="0.25;1;0.25" dur="3.0s" begin="0s" repeatCount="indefinite"/>
+  </circle>
+  <text x="44" y="99" class="sans" font-size="14" font-weight="700" fill="#16181f">Real Wall Time</text>
+  <text x="44" y="118" class="sans" font-size="11.2" fill="#4f5664">Prepare to last JVM exit,</text>
+  <text x="44" y="134" class="sans" font-size="11.2" fill="#4f5664">minus report write time.</text>
+
+  <!-- Card 2 -->
+  <rect x="258" y="48" width="216" height="104" rx="11" fill="#ffffff" stroke="#d8d1c4"/>
+  <rect x="274" y="61" width="76" height="19" rx="5" fill="#e6f7ef" stroke="#118a52" stroke-opacity="0.4"/>
+  <text x="312" y="74" text-anchor="middle" class="mono" font-size="9.5" fill="#0f7846">02 · RACE</text>
+  <circle cx="456" cy="70" r="3.5" fill="#118a52">
+    <animate attributeName="opacity" values="0.25;1;0.25" dur="3.0s" begin="0.6s" repeatCount="indefinite"/>
+  </circle>
+  <text x="274" y="99" class="sans" font-size="14" font-weight="700" fill="#16181f">Settings Raced</text>
+  <text x="274" y="118" class="sans" font-size="11.2" fill="#4f5664">Parallel off vs max 1–8</text>
+  <text x="274" y="134" class="sans" font-size="11.2" fill="#4f5664">using 5-run medians.</text>
+
+  <!-- Card 3 -->
+  <rect x="488" y="48" width="216" height="104" rx="11" fill="#ffffff" stroke="#d8d1c4"/>
+  <rect x="504" y="61" width="76" height="19" rx="5" fill="#fcf3df" stroke="#b37400" stroke-opacity="0.4"/>
+  <text x="542" y="74" text-anchor="middle" class="mono" font-size="9.5" fill="#9c6200">03 · BOOT</text>
+  <circle cx="686" cy="70" r="3.5" fill="#b37400">
+    <animate attributeName="opacity" values="0.25;1;0.25" dur="3.0s" begin="1.2s" repeatCount="indefinite"/>
+  </circle>
+  <text x="504" y="99" class="sans" font-size="14" font-weight="700" fill="#16181f">Start-up X-Ray</text>
+  <text x="504" y="118" class="sans" font-size="11.2" fill="#4f5664">See Java launch overhead</text>
+  <text x="504" y="134" class="sans" font-size="11.2" fill="#4f5664">vs real test body time.</text>
+
+  <!-- Card 4 -->
+  <rect x="718" y="48" width="216" height="104" rx="11" fill="#ffffff" stroke="#d8d1c4"/>
+  <rect x="734" y="61" width="84" height="19" rx="5" fill="#e6f5fc" stroke="#0077a8" stroke-opacity="0.4"/>
+  <text x="776" y="74" text-anchor="middle" class="mono" font-size="9.5" fill="#006691">04 · SUITES</text>
+  <circle cx="916" cy="70" r="3.5" fill="#0077a8">
+    <animate attributeName="opacity" values="0.25;1;0.25" dur="3.0s" begin="1.8s" repeatCount="indefinite"/>
+  </circle>
+  <text x="734" y="99" class="sans" font-size="14" font-weight="700" fill="#16181f">Collections</text>
+  <text x="734" y="118" class="sans" font-size="11.2" fill="#4f5664">Compare Sequential vs</text>
+  <text x="734" y="134" class="sans" font-size="11.2" fill="#4f5664">Parallel collection runs.</text>
+
+  <!-- Card 5 -->
+  <rect x="948" y="48" width="216" height="104" rx="11" fill="#ffffff" stroke="#d8d1c4"/>
+  <rect x="964" y="61" width="80" height="19" rx="5" fill="#f0ebfc" stroke="#6d48d6" stroke-opacity="0.4"/>
+  <text x="1004" y="74" text-anchor="middle" class="mono" font-size="9.5" fill="#5936bf">05 · ALERT</text>
+  <circle cx="1146" cy="70" r="3.5" fill="#6d48d6">
+    <animate attributeName="opacity" values="0.25;1;0.25" dur="3.0s" begin="2.4s" repeatCount="indefinite"/>
+  </circle>
+  <text x="964" y="99" class="sans" font-size="14" font-weight="700" fill="#16181f">Regression Alerts</text>
+  <text x="964" y="118" class="sans" font-size="11.2" fill="#4f5664">Flag slower builds in</text>
+  <text x="964" y="134" class="sans" font-size="11.2" fill="#4f5664">HTML, CI tables &amp; Slack.</text>
+</svg>
