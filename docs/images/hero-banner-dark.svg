@@ -1,0 +1,145 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 370" width="1200" height="370" role="img" aria-label="Katalon Run Clock — real elapsed time and parallel benchmarks for Katalon Studio">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0d0f13"/>
+      <stop offset="52%" stop-color="#141821"/>
+      <stop offset="100%" stop-color="#0d1118"/>
+    </linearGradient>
+    <radialGradient id="glowOrange" cx="0.72" cy="0.48" r="0.56">
+      <stop offset="0%" stop-color="#ff5b1f" stop-opacity="0.22"/>
+      <stop offset="65%" stop-color="#ff5b1f" stop-opacity="0.04"/>
+      <stop offset="100%" stop-color="#0d0f13" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowAmber" cx="0.16" cy="0.28" r="0.45">
+      <stop offset="0%" stop-color="#ffc857" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#0d0f13" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ff5b1f" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#ff5b1f" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#ffc857" stop-opacity="0"/>
+    </linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0v32" fill="none" stroke="#ffffff" stroke-opacity="0.03" stroke-width="1"/>
+    </pattern>
+    <clipPath id="cardClip"><rect x="16" y="16" width="1168" height="338" rx="18"/></clipPath>
+    <clipPath id="termClip"><rect x="610" y="33" width="546" height="304" rx="12"/></clipPath>
+    <style>
+      .sans { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+      .serif { font-family: Georgia, 'Times New Roman', Times, serif; font-style: italic; }
+      .serifNum { font-family: Georgia, 'Times New Roman', Times, serif; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    </style>
+  </defs>
+
+  <g clip-path="url(#cardClip)">
+    <rect x="16" y="16" width="1168" height="338" rx="18" fill="url(#bg)"/>
+    <rect x="16" y="16" width="1168" height="338" fill="url(#grid)"/>
+    <rect x="16" y="16" width="1168" height="338" fill="url(#glowOrange)"/>
+    <rect x="16" y="16" width="1168" height="338" fill="url(#glowAmber)"/>
+
+    <circle cx="968" cy="186" r="145" fill="none" stroke="#ff5b1f" stroke-opacity="0.10" stroke-dasharray="4 7"/>
+    <circle cx="968" cy="186" r="220" fill="none" stroke="#ff5b1f" stroke-opacity="0.06" stroke-dasharray="3 9">
+      <animate attributeName="r" values="200;246;200" dur="8s" repeatCount="indefinite"/>
+      <animate attributeName="stroke-opacity" values="0.04;0.11;0.04" dur="8s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Left status pill -->
+    <rect x="52" y="42" width="320" height="24" rx="12" fill="#181c26" stroke="#2c3345" stroke-width="1"/>
+    <circle cx="67" cy="54" r="4" fill="#ff5b1f">
+      <animate attributeName="opacity" values="1;0.35;1" dur="2.2s" repeatCount="indefinite"/>
+    </circle>
+    <text x="80" y="58" class="mono" font-size="10.5" letter-spacing="1.1" fill="#c7cdd9">DROP-IN LISTENER · KATALON 11+</text>
+
+    <!-- Chronograph emblem -->
+    <g>
+      <rect x="52" y="88" width="54" height="54" rx="14" fill="#181c26" stroke="#ff5b1f" stroke-opacity="0.55" stroke-width="1.3"/>
+      <circle cx="79" cy="115" r="17" fill="none" stroke="#30384b" stroke-width="2.2"/>
+      <circle cx="79" cy="115" r="17" fill="none" stroke="#ff5b1f" stroke-width="2.5" stroke-dasharray="62 48" stroke-linecap="round"/>
+      <g>
+        <line x1="79" y1="115" x2="79" y2="100" stroke="#ece6da" stroke-width="2" stroke-linecap="round"/>
+        <animateTransform attributeName="transform" type="rotate" from="0 79 115" to="360 79 115" dur="10s" repeatCount="indefinite"/>
+      </g>
+      <circle cx="79" cy="115" r="2.8" fill="#ff5b1f"/>
+    </g>
+
+    <text x="118" y="131" class="sans" font-size="40" font-weight="700" letter-spacing="-1.1" fill="#ece6da">Katalon Run Clock</text>
+    <text x="52" y="182" class="serif" font-size="27" fill="#ff8456">see where real time actually goes</text>
+
+    <text x="52" y="220" class="sans" font-size="14" fill="#a8b0bf">Measures every Java process from IDE click to last exit,</text>
+    <text x="52" y="242" class="sans" font-size="14" fill="#a8b0bf">and races your parallel settings against each other on one clock.</text>
+
+    <!-- Pills -->
+    <rect x="52" y="268" width="128" height="30" rx="8" fill="#181c26" stroke="#2c3345"/>
+    <text x="116" y="287" text-anchor="middle" class="mono" font-size="10.5" fill="#ece6da">ZERO PLUGINS</text>
+
+    <rect x="192" y="268" width="124" height="30" rx="8" fill="#181c26" stroke="#2c3345"/>
+    <text x="254" y="287" text-anchor="middle" class="mono" font-size="10.5" fill="#ece6da">RACE CLOCK</text>
+
+    <rect x="328" y="268" width="136" height="30" rx="8" fill="#181c26" stroke="#2c3345"/>
+    <text x="396" y="287" text-anchor="middle" class="mono" font-size="10.5" fill="#ece6da">OFFLINE HTML</text>
+
+    <text x="52" y="331" class="mono" font-size="10.5" letter-spacing="0.8" fill="#778094">REPORTS/&lt;RUN&gt;/RUN-CLOCK/SUMMARY.HTML  ·  ALL RUNS INDEX.HTML</text>
+
+    <!-- Right-hand Chronograph & Settings Race Monitor -->
+    <rect x="610" y="33" width="546" height="304" rx="12" fill="#101319" stroke="#272e3e" stroke-width="1.2"/>
+    <g clip-path="url(#termClip)">
+      <rect x="610" y="33" width="546" height="32" fill="#151923"/>
+      <circle cx="630" cy="49" r="4.5" fill="#ff5b1f"/>
+      <circle cx="645" cy="49" r="4.5" fill="#ffc857"/>
+      <circle cx="660" cy="49" r="4.5" fill="#3dd98f"/>
+      <text x="680" y="53" class="mono" font-size="10.5" letter-spacing="0.9" fill="#9099ab">RUN CLOCK API · BENCHMARK DIAL</text>
+      <rect x="900" y="43" width="7" height="12" rx="1" fill="#ff5b1f">
+        <animate attributeName="opacity" values="1;0;1" dur="1.1s" repeatCount="indefinite"/>
+      </rect>
+
+      <!-- Concentric clock gauge -->
+      <circle cx="702" cy="154" r="54" fill="none" stroke="#1e2432" stroke-width="4.5"/>
+      <circle cx="702" cy="154" r="46" fill="none" stroke="#1e2432" stroke-width="4.5"/>
+      <circle cx="702" cy="154" r="38" fill="none" stroke="#1e2432" stroke-width="4.5"/>
+
+      <!-- Colored process arcs -->
+      <circle cx="702" cy="154" r="54" fill="none" stroke="#ff5b1f" stroke-width="4.5" stroke-dasharray="235 120" stroke-dashoffset="-12" stroke-linecap="round" transform="rotate(-90 702 154)"/>
+      <circle cx="702" cy="154" r="46" fill="none" stroke="#ff5b1f" stroke-opacity="0.82" stroke-width="4.5" stroke-dasharray="205 120" stroke-dashoffset="-18" stroke-linecap="round" transform="rotate(-90 702 154)"/>
+      <circle cx="702" cy="154" r="38" fill="none" stroke="#ece6da" stroke-opacity="0.72" stroke-width="4.5" stroke-dasharray="115 140" stroke-dashoffset="-75" stroke-linecap="round" transform="rotate(-90 702 154)"/>
+
+      <!-- Rotating second sweep hand -->
+      <g>
+        <line x1="702" y1="154" x2="702" y2="95" stroke="#ff5b1f" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="702" cy="154" r="3" fill="#ff5b1f"/>
+        <animateTransform attributeName="transform" type="rotate" from="0 702 154" to="360 702 154" dur="14s" repeatCount="indefinite"/>
+      </g>
+      <circle cx="702" cy="154" r="28" fill="#101319"/>
+      <text x="702" y="160" text-anchor="middle" class="serifNum" font-size="23" font-weight="700" fill="#ece6da">27.2</text>
+      <text x="702" y="173" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.8" fill="#8b94a7">SECONDS</text>
+      <text x="702" y="232" text-anchor="middle" class="mono" font-size="9.5" fill="#3dd98f">FASTEST: 6.6 s</text>
+
+      <!-- Settings raced bars -->
+      <text x="794" y="92" class="mono" font-size="9.5" letter-spacing="1.0" fill="#8b94a7">EVERY SETTING RACED ON ONE CLOCK</text>
+
+      <text x="794" y="116" class="sans" font-size="11.5" font-weight="600" fill="#ece6da">Parallel off</text>
+      <rect x="794" y="123" width="28" height="9" rx="4.5" fill="#3dd98f"/>
+      <text x="832" y="131" class="mono" font-size="10.5" fill="#3dd98f">6.6 s · FASTEST</text>
+
+      <text x="794" y="156" class="sans" font-size="11.5" font-weight="600" fill="#ece6da">Parallel, max 4 <tspan fill="#9aa3b5" font-weight="400">(median 3 runs)</tspan></text>
+      <rect x="794" y="163" width="112" height="9" rx="4.5" fill="#ff5b1f"/>
+      <text x="916" y="171" class="mono" font-size="10.5" fill="#ffb094">27.2 s</text>
+
+      <text x="794" y="196" class="sans" font-size="11.5" font-weight="600" fill="#a8b0bf">Parallel, max 3</text>
+      <rect x="794" y="203" width="224" height="9" rx="4.5" fill="#343d52"/>
+      <text x="1028" y="211" class="mono" font-size="10.5" fill="#8b94a7">65.8 s</text>
+
+      <!-- Animated scanner beam -->
+      <line x1="628" y1="248" x2="1138" y2="248" stroke="#222837" stroke-width="1"/>
+      <rect x="610" y="247" width="150" height="2.2" fill="url(#beam)">
+        <animate attributeName="x" values="610;1010;610" dur="5.2s" repeatCount="indefinite"/>
+      </rect>
+
+      <!-- Insight box -->
+      <rect x="630" y="259" width="506" height="62" rx="9" fill="#13221d" stroke="#3dd98f" stroke-opacity="0.45" stroke-width="1.2"/>
+      <text x="646" y="281" class="sans" font-size="12.5" font-weight="700" fill="#3dd98f">84% of parallel process time was Java start-up (56.9 s vs 9.8 s tests)</text>
+      <text x="646" y="302" class="mono" font-size="10.5" fill="#a8b0bf">WRITES REPORT OUTSIDE CLOCK (1.1 S)  ·  WORKS IN STUDIO &amp; CI</text>
+    </g>
+  </g>
+  <rect x="16" y="16" width="1168" height="338" rx="18" fill="none" stroke="#282f40" stroke-width="1.2"/>
+</svg>
